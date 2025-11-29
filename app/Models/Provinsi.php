@@ -10,11 +10,11 @@ class Provinsi extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'idProvinsi';
+    protected $primaryKey = 'id_provinsi';
     public $incrementing = true;
     protected $keyType = 'int';
 
-    protected $fillable = ['namaProvinsi', 'imgProvinsi', 'detailProvinsi'];
+    protected $fillable = ['nama_provinsi', 'img_provinsi', 'detail_provinsi', ];
 
     protected $casts = [
         'created_at' => 'datetime',
@@ -27,5 +27,16 @@ class Provinsi extends Model
             ->setTimezone('Asia/Jakarta')
             ->format('Y-m-d H:i:s');
     }
+
+    public function katalogBatik()
+    {
+        return $this->hasMany(katalog_batik::class, 'provinsi_id', 'id_provinsi');
+    }
+
+    public function wisata()
+    {
+        return $this->hasMany(Wisata::class, 'provinsi_id', 'id_provinsi');
+    }
+
 
 }
