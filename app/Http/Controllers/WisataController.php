@@ -15,7 +15,7 @@ class WisataController extends Controller
      */
     public function index(): JsonResponse
     {
-        $wisata = Wisata::all();
+        $wisata = Wisata::with('provinsi')->get();
         if ($wisata->isEmpty()) {
             return ApiResponse::error(404, "Data Wisata Tidak Ditemukan");
         }
@@ -30,16 +30,17 @@ class WisataController extends Controller
     public function store(Request $request): JsonResponse
     {
         $request->validate([
-            'namaWisata' => [
+            'provinsi_id' => 'required|exists:provinsis,id_provinsi',
+            'nama_wisata' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('wisatas', 'namaWisata')->where(fn ($query) => $query->whereRaw('LOWER(namaWisata) = LOWER(?)', [$request->namaWisata]))
+                Rule::unique('wisatas', 'nama_wisata')->where(fn ($query) => $query->whereRaw('LOWER(nama_wisata) = LOWER(?)', [$request->nama_wisata]))
             ],
-            'detailWisata' => 'nullable','string',
+            'detail_wisata' => 'nullable','string',
             'lat' => 'nullable',
             'lon' => 'nullable',
-            'imgWisata' => 'nullable|string',
+            'img_wisata' => 'nullable|string',
             'wilayah' => 'nullable|string|max:255',
         ]);
 
@@ -53,7 +54,7 @@ class WisataController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $wisata = Wisata::find($id);
+        $wisata = Wisata::with('provinsi')->find($id);
         if (!$wisata) {
             return ApiResponse::error(404, "Data Wisata Tidak Ditemukan");
         }

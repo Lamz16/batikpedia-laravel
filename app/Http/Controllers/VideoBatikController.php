@@ -27,9 +27,9 @@ class VideoBatikController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'judulVideo' => 'required|string|max:255',
-            'imgVideo' => 'required|string|max:255',
-            'urlVideo' => 'required|string|max:255',
+            'judul_video' => 'required|string|max:255',
+            'img_video' => 'required|string|max:255',
+            'url_video' => 'required|string|max:255',
         ]);
 
         $video_batik = Video_batik::create($request->all());
@@ -62,9 +62,9 @@ class VideoBatikController extends Controller
             return ApiResponse::error("Video batik not found");
         }
         $request->validate([
-            'judulVideo' => 'required|string|max:255',
-            'imgVideo' => 'required|string|max:255',
-            'urlVideo' => 'required|string|max:255',
+            'judul_video' => 'required|string|max:255',
+            'img_video' => 'required|string|max:255',
+            'url_video' => 'required|string|max:255',
         ]);
         $videoBatik->update($request->all());
         return ApiResponse::success($videoBatik, "Success update data");

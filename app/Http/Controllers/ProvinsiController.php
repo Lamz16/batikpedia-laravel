@@ -15,7 +15,7 @@ class ProvinsiController extends Controller
      */
     public function index()
     {
-        $provinsi = Provinsi::all();
+        $provinsi = Provinsi::with(['katalogBatik:id_katalog_batik,provinsi_id,img_batik', 'wisata'])->get();
         if (!$provinsi) {
             return ApiResponse::error(500, 'Gagal mendapatkan data provinsi');
         }
@@ -33,16 +33,16 @@ class ProvinsiController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'namaProvinsi' => [
+            'nama_provinsi' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('provinsis', 'namaProvinsi')
-                    ->where(fn($q) => $q->whereRaw('LOWER(namaProvinsi) = LOWER(?)', [$request->namaProvinsi])
+                Rule::unique('provinsis', 'nama_provinsi')
+                    ->where(fn($q) => $q->whereRaw('LOWER(nama_provinsi) = LOWER(?)', [$request->nama_provinsi])
                     )
             ],
-            'imgProvinsi' => 'nullable|string',
-            'detailProvinsi' => 'nullable|string',
+            'img_provinsi' => 'nullable|string',
+            'detail_provinsi' => 'nullable|string',
         ]);
 
         $provinsi = Provinsi::create($request->all());
@@ -56,7 +56,7 @@ class ProvinsiController extends Controller
      */
     public function show(int $id)
     {
-        $provinsi = Provinsi::find($id);
+        $provinsi = Provinsi::with(['katalogBatik:id_katalog_batik,provinsi_id,img_batik', 'wisata'])->find($id);
         if (!$provinsi) {
             return ApiResponse::error(404, 'Gagal mendapatkan data provinsi');
         }

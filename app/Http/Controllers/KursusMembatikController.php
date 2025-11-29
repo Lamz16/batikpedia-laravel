@@ -32,11 +32,11 @@ class KursusMembatikController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'namaKursus' => 'required|string',
+            'nama_kursus' => 'required|string',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'harga' => 'required|integer',
             'deskripsi' => 'required|string',
-            'urlKursus' => 'required|string',
+            'url_kursus' => 'required|string',
         ]);
 
         $image = $request->file('image');
@@ -44,11 +44,11 @@ class KursusMembatikController extends Controller
         $image->move(public_path('uploads/kursus'), $filename);
 
         $kursus = Kursus_membatik::create([
-            'namaKursus' => $request->namaKursus,
+            'nama_kursus' => $request->nama_kursus,
                 'image' => 'uploads/kursus/' .$filename,
                 'harga' => formatRupiah($request->harga),
                 'deskripsi' => $request->deskripsi,
-                'urlKursus' => $request->urlKursus,
+                'url_kursus' => $request->url_kursus,
             ]
         );
 
@@ -81,11 +81,11 @@ class KursusMembatikController extends Controller
         }
 
         $request->validate([
-            'namaKursus' => 'required|string',
+            'nama_kursus' => 'required|string',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'harga' => 'required|integer',
             'deskripsi' => 'required|string',
-            'urlKursus' => 'required|string',
+            'url_kursus' => 'required|string',
         ]);
 
         if ($request->hasFile('image')) {
@@ -104,10 +104,10 @@ class KursusMembatikController extends Controller
             $kursus->image = 'uploads/kursus/' .$fileName;
 
         }
-        $kursus->namaKursus = $request->input('namaKursus', $kursus->namaKursus);
+        $kursus->nama_kursus = $request->input('nama_kursus', $kursus->nama_kursus);
         $kursus->harga = formatRupiah($request->input('harga', $kursus->harga));
         $kursus->deskripsi = $request->input('deskripsi', $kursus->deskripsi);
-        $kursus->urlKursus = $request->input('urlKursus', $kursus->urlKursus);
+        $kursus->url_kursus = $request->input('urlKursus', $kursus->url_kursus);
         $kursus->save();
 
         $kursus->image = url($kursus->image);
