@@ -1,0 +1,14 @@
+@startuml
+
+
+actor "User" as user
+node "batik-pedia-restful-api" {
+ component "Controller" as controller
+ }
+
+database "PostgreSQL" as database
+
+user <--> controller
+controller <--> database
+
+@enduml
