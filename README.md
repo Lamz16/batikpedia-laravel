@@ -4,6 +4,9 @@ Batik Pedia adalah aplikasi web berbasis Laravel yang dibuat untuk mendokumentas
 informasi terkait budaya batik Indonesia. Proyek ini menggunakan framework Laravel karena sintaksnya yang elegan dan
 workflow pengembangan yang menyenangkan. Proyek ini dibuat atas dasar kebutuhan aplikasi Android Batik Pedia.
 
+## Alur Aplikasi
+![Gambar FLow Aplikasi](diagram-14495331867026526671.png)
+
 ## Fitur Utama Batik Pedia
 
 1. Manajemen Kursus Membatik
