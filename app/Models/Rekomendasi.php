@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Rekomendasi extends Model
 {
-    protected $primaryKey = 'idRekomendasi';
+    protected $primaryKey = 'id_rekomendasi';
     protected $fillable = [
         'image',
         'link'
