@@ -7,14 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class Wisata extends Model
 {
-    protected $primaryKey = 'idWisata';
+    protected $primaryKey = 'id_wisata';
 
     protected $fillable =[
-        'namaWisata',
-        'detailWisata',
+        'provinsi_id',
+        'nama_wisata',
+        'detail_wisata',
         'lat',
         'lon',
-        'imgWisata',
+        'img_wisata',
         'wilayah',
     ];
 
@@ -29,5 +30,11 @@ class Wisata extends Model
             ->setTimezone('Asia/Jakarta')
             ->format('Y-m-d H:i:s');
     }
+
+    public function provinsi()
+    {
+        return $this->belongsTo(Provinsi::class, 'provinsi_id', 'id_provinsi');
+    }
+
 
 }
