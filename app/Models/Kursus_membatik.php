@@ -7,14 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Kursus_membatik extends Model
 {
-    protected $primaryKey = 'idKursus';
+    protected $primaryKey = 'id_kursus';
 
     protected $fillable= [
-      'namaKursus',
+      'nama_kursus',
         'image',
         'harga',
         'deskripsi',
-        'urlKursus'
+        'url_kursus'
     ];
 
     protected $casts = [
