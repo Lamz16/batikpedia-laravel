@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('video_batiks', function (Blueprint $table) {
-            $table->id('idVideo');
-            $table->string('judulVideo');
-            $table->string('imgVideo');
-            $table->string('urlVideo');
+            $table->id('id_video');
+            $table->string('judul_video');
+            $table->string('img_video');
+            $table->string('url_video');
             $table->timestamps();
         });
     }

@@ -12,12 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('wisatas', function (Blueprint $table) {
-            $table->id('idWisata');
-            $table->string('namaWisata')->unique();
-            $table->text('detailWisata')->nullable();
+            $table->id('id_wisata');
+            $table->unsignedBigInteger('provinsi_id');
+            $table->foreign('provinsi_id')->references('id')->on('provinsis')->onDelete('cascade');
+            $table->string('nama_wisata')->unique();
+            $table->text('detail_wisata')->nullable();
             $table->decimal('lat',10,7)->nullable();
             $table->decimal('lon',10,7)->nullable();
-            $table->string('imgWisata')->nullable();
+            $table->string('img_wisata')->nullable();
             $table->string('wilayah')->nullable();
             $table->timestamps();
         });
