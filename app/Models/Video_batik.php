@@ -7,11 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Video_batik extends Model
 {
-    protected $primaryKey = 'idVideo';
+    protected $primaryKey = 'id_video';
     protected $fillable =[
-      'judulVideo',
-      'imgVideo',
-      'urlVideo',
+      'judul_video',
+      'img_video',
+      'url_video',
     ];
 
     protected $casts = [
