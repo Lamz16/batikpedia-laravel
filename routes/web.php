@@ -8,4 +8,13 @@ Route::get('/', function () {
 
 Route::get('/admin/dashboard', function () {
     return view('admin.index');
-});
+})->name('admin.dashboard');
+
+Route::get('/admin/forms/add-katalog', function () {
+    return view('admin.forms.katalog.add_katalog');
+})->name('admin.forms.add-katalog');
+
+Route::get('/admin/forms/add-provinsi', function () {
+    return view('admin.forms.provinsi.add_provinsi');
+})->name('admin.forms.add-provinsi');
+
