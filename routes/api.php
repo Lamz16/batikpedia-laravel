@@ -7,9 +7,17 @@ use App\Http\Controllers\ProvinsiController;
 use App\Http\Controllers\RekomendasiController;
 use App\Http\Controllers\VideoBatikController;
 use App\Http\Controllers\WisataController;
-use App\Models\katalog_batik;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/', function () {
+    return response()->json([
+        'status' => 'Success',
+        'message' => 'Selamat datang di BatikPedia API',
+        'version' => '1.0.0',
+        'author' => 'Andi Salam Syahputra',
+        'url-dokumentasi' => 'https://documenter.getpostman.com/view/44668350/2sB3dLUBwi'
+    ]);
+});
 
 Route::apiResource('provinsi', ProvinsiController::class);
 Route::apiResource('wisata', WisataController::class);
