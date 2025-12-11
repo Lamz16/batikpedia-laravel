@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\ProvinsiController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/admin/dashboard', function () {
@@ -17,3 +18,16 @@ Route::get('/admin/forms/add-provinsi', function () {
 Route::get('/admin/forms/add-berita', function () {
     return view('admin.forms.berita.add_berita');
 })->name('admin.forms.add-berita');
+
+Route::get('/admin/forms/add-wisata', function () {
+    return view('admin.forms.wisata.add_wisata');
+})->name('admin.forms.add-wisata');
+
+
+
+
+/// POST
+///
+
+Route::post('/admin/forms/add-provinsi', [ProvinsiController::class, 'store'])
+    ->name('admin.forms.add-provinsi.store');

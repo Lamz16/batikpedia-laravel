@@ -8,5 +8,5 @@
     <link rel="stylesheet" href="{{asset('build/vendors/css/vendor.bundle.base.css')}}">
     <link rel="stylesheet" href="{{asset('build/css/vertical-layout-light/style.css')}}">
     <!-- endinject -->
-    <link rel="shortcut icon" href="{{asset('build/images/favicon.png')}}" />
+    <link rel="shortcut icon" href="{{asset('build/images/tricakrawala.png')}}" />
 </head>
