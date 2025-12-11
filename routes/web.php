@@ -14,3 +14,6 @@ Route::get('/admin/forms/add-provinsi', function () {
     return view('admin.forms.provinsi.add_provinsi');
 })->name('admin.forms.add-provinsi');
 
+Route::get('/admin/forms/add-berita', function () {
+    return view('admin.forms.berita.add_berita');
+})->name('admin.forms.add-berita');
