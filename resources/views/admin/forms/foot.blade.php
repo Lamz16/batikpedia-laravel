@@ -12,6 +12,6 @@
 <script src="{{asset('build/vendors/select2/select2.min.js')}}"></script>
 <!-- End plugin js for this page -->
 <!-- Custom js for this page-->
-<script src="{{asset('/js/file-upload.js')}}"></script>
+<script src="{{asset('build/js/file-upload.js')}}"></script>
 <script src="{{asset('build/js/typeahead.js')}}"></script>
 <script src="{{asset('build/js/select2.js')}}"></script>
