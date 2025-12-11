@@ -16,7 +16,8 @@
             <div class="collapse" id="form-elements">
                 <ul class="nav flex-column sub-menu">
                     <li class="nav-item"><a class="nav-link" href="{{route('admin.forms.add-katalog')}}">Tambah Katalog Batik</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{route('admin.forms.add-katalog')}}">Tambah Provinsi</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{route('admin.forms.add-provinsi')}}">Tambah Provinsi</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{route('admin.forms.add-berita')}}">Tambah Berita</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{route('admin.forms.add-katalog')}}">Tambah Wisata</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{route('admin.forms.add-katalog')}}">Tambah Video Batik</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{route('admin.forms.add-katalog')}}">Tambah Kursus Batik</a></li>
