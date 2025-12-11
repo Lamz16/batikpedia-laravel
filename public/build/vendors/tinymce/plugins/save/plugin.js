@@ -1,283 +1,119 @@
+/**
+ * TinyMCE version 7.2.0 (2024-06-19)
+ */
+
 (function () {
+    'use strict';
 
-var defs = {}; // id -> {dependencies, definition, instance (possibly undefined)}
+    var global$2 = tinymce.util.Tools.resolve('tinymce.PluginManager');
 
-// Used when there is no 'main' module.
-// The name is probably (hopefully) unique so minification removes for releases.
-var register_3795 = function (id) {
-  var module = dem(id);
-  var fragments = id.split('.');
-  var target = Function('return this;')();
-  for (var i = 0; i < fragments.length - 1; ++i) {
-    if (target[fragments[i]] === undefined)
-      target[fragments[i]] = {};
-    target = target[fragments[i]];
-  }
-  target[fragments[fragments.length - 1]] = module;
-};
+    const isSimpleType = type => value => typeof value === type;
+    const isFunction = isSimpleType('function');
 
-var instantiate = function (id) {
-  var actual = defs[id];
-  var dependencies = actual.deps;
-  var definition = actual.defn;
-  var len = dependencies.length;
-  var instances = new Array(len);
-  for (var i = 0; i < len; ++i)
-    instances[i] = dem(dependencies[i]);
-  var defResult = definition.apply(null, instances);
-  if (defResult === undefined)
-     throw 'module [' + id + '] returned undefined';
-  actual.instance = defResult;
-};
+    var global$1 = tinymce.util.Tools.resolve('tinymce.dom.DOMUtils');
 
-var def = function (id, dependencies, definition) {
-  if (typeof id !== 'string')
-    throw 'module id must be a string';
-  else if (dependencies === undefined)
-    throw 'no dependencies for ' + id;
-  else if (definition === undefined)
-    throw 'no definition function for ' + id;
-  defs[id] = {
-    deps: dependencies,
-    defn: definition,
-    instance: undefined
-  };
-};
+    var global = tinymce.util.Tools.resolve('tinymce.util.Tools');
 
-var dem = function (id) {
-  var actual = defs[id];
-  if (actual === undefined)
-    throw 'module [' + id + '] was undefined';
-  else if (actual.instance === undefined)
-    instantiate(id);
-  return actual.instance;
-};
+    const option = name => editor => editor.options.get(name);
+    const register$2 = editor => {
+      const registerOption = editor.options.register;
+      registerOption('save_enablewhendirty', {
+        processor: 'boolean',
+        default: true
+      });
+      registerOption('save_onsavecallback', { processor: 'function' });
+      registerOption('save_oncancelcallback', { processor: 'function' });
+    };
+    const enableWhenDirty = option('save_enablewhendirty');
+    const getOnSaveCallback = option('save_onsavecallback');
+    const getOnCancelCallback = option('save_oncancelcallback');
 
-var req = function (ids, callback) {
-  var len = ids.length;
-  var instances = new Array(len);
-  for (var i = 0; i < len; ++i)
-    instances.push(dem(ids[i]));
-  callback.apply(null, callback);
-};
-
-var ephox = {};
-
-ephox.bolt = {
-  module: {
-    api: {
-      define: def,
-      require: req,
-      demand: dem
-    }
-  }
-};
-
-var define = def;
-var require = req;
-var demand = dem;
-// this helps with minificiation when using a lot of global references
-var defineGlobal = function (id, ref) {
-  define(id, [], function () { return ref; });
-};
-/*jsc
-["tinymce.plugins.save.Plugin","tinymce.core.PluginManager","tinymce.core.dom.DOMUtils","tinymce.core.EditorManager","tinymce.core.util.Tools","global!tinymce.util.Tools.resolve"]
-jsc*/
-defineGlobal("global!tinymce.util.Tools.resolve", tinymce.util.Tools.resolve);
-/**
- * ResolveGlobal.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.core.PluginManager',
-  [
-    'global!tinymce.util.Tools.resolve'
-  ],
-  function (resolve) {
-    return resolve('tinymce.PluginManager');
-  }
-);
-
-/**
- * ResolveGlobal.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.core.dom.DOMUtils',
-  [
-    'global!tinymce.util.Tools.resolve'
-  ],
-  function (resolve) {
-    return resolve('tinymce.dom.DOMUtils');
-  }
-);
-
-/**
- * ResolveGlobal.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.core.EditorManager',
-  [
-    'global!tinymce.util.Tools.resolve'
-  ],
-  function (resolve) {
-    return resolve('tinymce.EditorManager');
-  }
-);
-
-/**
- * ResolveGlobal.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.core.util.Tools',
-  [
-    'global!tinymce.util.Tools.resolve'
-  ],
-  function (resolve) {
-    return resolve('tinymce.util.Tools');
-  }
-);
-
-/**
- * Plugin.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-/**
- * This class contains all core logic for the save plugin.
- *
- * @class tinymce.save.Plugin
- * @private
- */
-define(
-  'tinymce.plugins.save.Plugin',
-  [
-    'tinymce.core.PluginManager',
-    'tinymce.core.dom.DOMUtils',
-    'tinymce.core.EditorManager',
-    'tinymce.core.util.Tools'
-  ],
-  function (PluginManager, DOMUtils, EditorManager, Tools) {
-    PluginManager.add('save', function (editor) {
-      function save() {
-        var formObj;
-
-        formObj = DOMUtils.DOM.getParent(editor.id, 'form');
-
-        if (editor.getParam("save_enablewhendirty", true) && !editor.isDirty()) {
-          return;
-        }
-
-        EditorManager.triggerSave();
-
-        // Use callback instead
-        if (editor.getParam("save_onsavecallback")) {
-          editor.execCallback('save_onsavecallback', editor);
-          editor.nodeChanged();
-          return;
-        }
-
-        if (formObj) {
-          editor.setDirty(false);
-
-          if (!formObj.onsubmit || formObj.onsubmit()) {
-            if (typeof formObj.submit == "function") {
-              formObj.submit();
-            } else {
-              displayErrorMessage(editor.translate("Error: Form submit field collision."));
-            }
-          }
-
-          editor.nodeChanged();
-        } else {
-          displayErrorMessage(editor.translate("Error: No form element found."));
-        }
+    const displayErrorMessage = (editor, message) => {
+      editor.notificationManager.open({
+        text: message,
+        type: 'error'
+      });
+    };
+    const save = editor => {
+      const formObj = global$1.DOM.getParent(editor.id, 'form');
+      if (enableWhenDirty(editor) && !editor.isDirty()) {
+        return;
       }
-
-      function displayErrorMessage(message) {
-        editor.notificationManager.open({
-          text: message,
-          type: 'error'
-        });
-      }
-
-      function cancel() {
-        var h = Tools.trim(editor.startContent);
-
-        // Use callback instead
-        if (editor.getParam("save_oncancelcallback")) {
-          editor.execCallback('save_oncancelcallback', editor);
-          return;
-        }
-
-        editor.setContent(h);
-        editor.undoManager.clear();
+      editor.save();
+      const onSaveCallback = getOnSaveCallback(editor);
+      if (isFunction(onSaveCallback)) {
+        onSaveCallback.call(editor, editor);
         editor.nodeChanged();
+        return;
       }
-
-      function stateToggle() {
-        var self = this;
-
-        editor.on('nodeChange dirty', function () {
-          self.disabled(editor.getParam("save_enablewhendirty", true) && !editor.isDirty());
-        });
+      if (formObj) {
+        editor.setDirty(false);
+        if (!formObj.onsubmit || formObj.onsubmit()) {
+          if (typeof formObj.submit === 'function') {
+            formObj.submit();
+          } else {
+            displayErrorMessage(editor, 'Error: Form submit field collision.');
+          }
+        }
+        editor.nodeChanged();
+      } else {
+        displayErrorMessage(editor, 'Error: No form element found.');
       }
+    };
+    const cancel = editor => {
+      const h = global.trim(editor.startContent);
+      const onCancelCallback = getOnCancelCallback(editor);
+      if (isFunction(onCancelCallback)) {
+        onCancelCallback.call(editor, editor);
+        return;
+      }
+      editor.resetContent(h);
+    };
 
-      editor.addCommand('mceSave', save);
-      editor.addCommand('mceCancel', cancel);
+    const register$1 = editor => {
+      editor.addCommand('mceSave', () => {
+        save(editor);
+      });
+      editor.addCommand('mceCancel', () => {
+        cancel(editor);
+      });
+    };
 
-      editor.addButton('save', {
+    const stateToggle = editor => api => {
+      const handler = () => {
+        api.setEnabled(!enableWhenDirty(editor) || editor.isDirty());
+      };
+      handler();
+      editor.on('NodeChange dirty', handler);
+      return () => editor.off('NodeChange dirty', handler);
+    };
+    const register = editor => {
+      editor.ui.registry.addButton('save', {
         icon: 'save',
-        text: 'Save',
-        cmd: 'mceSave',
-        disabled: true,
-        onPostRender: stateToggle
+        tooltip: 'Save',
+        enabled: false,
+        onAction: () => editor.execCommand('mceSave'),
+        onSetup: stateToggle(editor),
+        shortcut: 'Meta+S'
       });
-
-      editor.addButton('cancel', {
-        text: 'Cancel',
-        icon: false,
-        cmd: 'mceCancel',
-        disabled: true,
-        onPostRender: stateToggle
+      editor.ui.registry.addButton('cancel', {
+        icon: 'cancel',
+        tooltip: 'Cancel',
+        enabled: false,
+        onAction: () => editor.execCommand('mceCancel'),
+        onSetup: stateToggle(editor)
       });
-
       editor.addShortcut('Meta+S', '', 'mceSave');
-    });
+    };
 
-    return function () { };
-  }
-);
-dem('tinymce.plugins.save.Plugin')();
+    var Plugin = () => {
+      global$2.add('save', editor => {
+        register$2(editor);
+        register(editor);
+        register$1(editor);
+      });
+    };
+
+    Plugin();
+
 })();

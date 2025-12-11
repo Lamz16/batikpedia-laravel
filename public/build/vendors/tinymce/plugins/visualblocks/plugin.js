@@ -1,208 +1,98 @@
+/**
+ * TinyMCE version 7.2.0 (2024-06-19)
+ */
+
 (function () {
+    'use strict';
 
-var defs = {}; // id -> {dependencies, definition, instance (possibly undefined)}
+    const Cell = initial => {
+      let value = initial;
+      const get = () => {
+        return value;
+      };
+      const set = v => {
+        value = v;
+      };
+      return {
+        get,
+        set
+      };
+    };
 
-// Used when there is no 'main' module.
-// The name is probably (hopefully) unique so minification removes for releases.
-var register_3795 = function (id) {
-  var module = dem(id);
-  var fragments = id.split('.');
-  var target = Function('return this;')();
-  for (var i = 0; i < fragments.length - 1; ++i) {
-    if (target[fragments[i]] === undefined)
-      target[fragments[i]] = {};
-    target = target[fragments[i]];
-  }
-  target[fragments[fragments.length - 1]] = module;
-};
+    var global = tinymce.util.Tools.resolve('tinymce.PluginManager');
 
-var instantiate = function (id) {
-  var actual = defs[id];
-  var dependencies = actual.deps;
-  var definition = actual.defn;
-  var len = dependencies.length;
-  var instances = new Array(len);
-  for (var i = 0; i < len; ++i)
-    instances[i] = dem(dependencies[i]);
-  var defResult = definition.apply(null, instances);
-  if (defResult === undefined)
-     throw 'module [' + id + '] returned undefined';
-  actual.instance = defResult;
-};
+    const fireVisualBlocks = (editor, state) => {
+      editor.dispatch('VisualBlocks', { state });
+    };
 
-var def = function (id, dependencies, definition) {
-  if (typeof id !== 'string')
-    throw 'module id must be a string';
-  else if (dependencies === undefined)
-    throw 'no dependencies for ' + id;
-  else if (definition === undefined)
-    throw 'no definition function for ' + id;
-  defs[id] = {
-    deps: dependencies,
-    defn: definition,
-    instance: undefined
-  };
-};
+    const toggleVisualBlocks = (editor, pluginUrl, enabledState) => {
+      const dom = editor.dom;
+      dom.toggleClass(editor.getBody(), 'mce-visualblocks');
+      enabledState.set(!enabledState.get());
+      fireVisualBlocks(editor, enabledState.get());
+    };
 
-var dem = function (id) {
-  var actual = defs[id];
-  if (actual === undefined)
-    throw 'module [' + id + '] was undefined';
-  else if (actual.instance === undefined)
-    instantiate(id);
-  return actual.instance;
-};
-
-var req = function (ids, callback) {
-  var len = ids.length;
-  var instances = new Array(len);
-  for (var i = 0; i < len; ++i)
-    instances.push(dem(ids[i]));
-  callback.apply(null, callback);
-};
-
-var ephox = {};
-
-ephox.bolt = {
-  module: {
-    api: {
-      define: def,
-      require: req,
-      demand: dem
-    }
-  }
-};
-
-var define = def;
-var require = req;
-var demand = dem;
-// this helps with minificiation when using a lot of global references
-var defineGlobal = function (id, ref) {
-  define(id, [], function () { return ref; });
-};
-/*jsc
-["tinymce.plugins.visualblocks.Plugin","tinymce.core.PluginManager","global!tinymce.util.Tools.resolve"]
-jsc*/
-defineGlobal("global!tinymce.util.Tools.resolve", tinymce.util.Tools.resolve);
-/**
- * ResolveGlobal.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.core.PluginManager',
-  [
-    'global!tinymce.util.Tools.resolve'
-  ],
-  function (resolve) {
-    return resolve('tinymce.PluginManager');
-  }
-);
-
-/**
- * Plugin.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-/**
- * This class contains all core logic for the code plugin.
- *
- * @class tinymce.visualblocks.Plugin
- * @private
- */
-define(
-  'tinymce.plugins.visualblocks.Plugin',
-  [
-    'tinymce.core.PluginManager'
-  ],
-  function (PluginManager) {
-    PluginManager.add('visualblocks', function (editor, url) {
-      var cssId, visualBlocksMenuItem, enabled;
-
-      // We don't support older browsers like IE6/7 and they don't provide prototypes for DOM objects
-      if (!window.NodeList) {
-        return;
-      }
-
-      function toggleActiveState() {
-        var self = this;
-
-        self.active(enabled);
-
-        editor.on('VisualBlocks', function () {
-          self.active(editor.dom.hasClass(editor.getBody(), 'mce-visualblocks'));
-        });
-      }
-
-      editor.addCommand('mceVisualBlocks', function () {
-        var dom = editor.dom, linkElm;
-
-        if (!cssId) {
-          cssId = dom.uniqueId();
-          linkElm = dom.create('link', {
-            id: cssId,
-            rel: 'stylesheet',
-            href: url + '/css/visualblocks.css'
-          });
-
-          editor.getDoc().getElementsByTagName('head')[0].appendChild(linkElm);
-        }
-
-        // Toggle on/off visual blocks while computing previews
-        editor.on("PreviewFormats AfterPreviewFormats", function (e) {
-          if (enabled) {
-            dom.toggleClass(editor.getBody(), 'mce-visualblocks', e.type == "afterpreviewformats");
-          }
-        });
-
-        dom.toggleClass(editor.getBody(), 'mce-visualblocks');
-        enabled = editor.dom.hasClass(editor.getBody(), 'mce-visualblocks');
-
-        if (visualBlocksMenuItem) {
-          visualBlocksMenuItem.active(dom.hasClass(editor.getBody(), 'mce-visualblocks'));
-        }
-
-        editor.fire('VisualBlocks');
+    const register$2 = (editor, pluginUrl, enabledState) => {
+      editor.addCommand('mceVisualBlocks', () => {
+        toggleVisualBlocks(editor, pluginUrl, enabledState);
       });
+    };
 
-      editor.addButton('visualblocks', {
-        title: 'Show blocks',
-        cmd: 'mceVisualBlocks',
-        onPostRender: toggleActiveState
+    const option = name => editor => editor.options.get(name);
+    const register$1 = editor => {
+      const registerOption = editor.options.register;
+      registerOption('visualblocks_default_state', {
+        processor: 'boolean',
+        default: false
       });
+    };
+    const isEnabledByDefault = option('visualblocks_default_state');
 
-      editor.addMenuItem('visualblocks', {
+    const setup = (editor, pluginUrl, enabledState) => {
+      editor.on('PreviewFormats AfterPreviewFormats', e => {
+        if (enabledState.get()) {
+          editor.dom.toggleClass(editor.getBody(), 'mce-visualblocks', e.type === 'afterpreviewformats');
+        }
+      });
+      editor.on('init', () => {
+        if (isEnabledByDefault(editor)) {
+          toggleVisualBlocks(editor, pluginUrl, enabledState);
+        }
+      });
+    };
+
+    const toggleActiveState = (editor, enabledState) => api => {
+      api.setActive(enabledState.get());
+      const editorEventCallback = e => api.setActive(e.state);
+      editor.on('VisualBlocks', editorEventCallback);
+      return () => editor.off('VisualBlocks', editorEventCallback);
+    };
+    const register = (editor, enabledState) => {
+      const onAction = () => editor.execCommand('mceVisualBlocks');
+      editor.ui.registry.addToggleButton('visualblocks', {
+        icon: 'visualblocks',
+        tooltip: 'Show blocks',
+        onAction,
+        onSetup: toggleActiveState(editor, enabledState)
+      });
+      editor.ui.registry.addToggleMenuItem('visualblocks', {
         text: 'Show blocks',
-        cmd: 'mceVisualBlocks',
-        onPostRender: toggleActiveState,
-        selectable: true,
-        context: 'view',
-        prependToContext: true
+        icon: 'visualblocks',
+        onAction,
+        onSetup: toggleActiveState(editor, enabledState)
       });
+    };
 
-      editor.on('init', function () {
-        if (editor.settings.visualblocks_default_state) {
-          editor.execCommand('mceVisualBlocks', false, null, { skip_focus: true });
-        }
+    var Plugin = () => {
+      global.add('visualblocks', (editor, pluginUrl) => {
+        register$1(editor);
+        const enabledState = Cell(false);
+        register$2(editor, pluginUrl, enabledState);
+        register(editor, enabledState);
+        setup(editor, pluginUrl, enabledState);
       });
+    };
 
-      editor.on('remove', function () {
-        editor.dom.removeClass(editor.getBody(), 'mce-visualblocks');
-      });
-    });
+    Plugin();
 
-    return function () { };
-  }
-);
-dem('tinymce.plugins.visualblocks.Plugin')();
 })();

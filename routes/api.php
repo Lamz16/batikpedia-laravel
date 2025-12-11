@@ -34,5 +34,3 @@ Route::apiResource('katalog-batik', KatalogBatikController::class);
 Route::post('katalog-batik/{id}', [KatalogBatikController::class, 'updateKatalog']);
 
 
-
-

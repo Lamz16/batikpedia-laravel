@@ -1,342 +1,179 @@
+/**
+ * TinyMCE version 7.2.0 (2024-06-19)
+ */
+
 (function () {
+    'use strict';
 
-var defs = {}; // id -> {dependencies, definition, instance (possibly undefined)}
+    const Cell = initial => {
+      let value = initial;
+      const get = () => {
+        return value;
+      };
+      const set = v => {
+        value = v;
+      };
+      return {
+        get,
+        set
+      };
+    };
 
-// Used when there is no 'main' module.
-// The name is probably (hopefully) unique so minification removes for releases.
-var register_3795 = function (id) {
-  var module = dem(id);
-  var fragments = id.split('.');
-  var target = Function('return this;')();
-  for (var i = 0; i < fragments.length - 1; ++i) {
-    if (target[fragments[i]] === undefined)
-      target[fragments[i]] = {};
-    target = target[fragments[i]];
-  }
-  target[fragments[fragments.length - 1]] = module;
-};
+    var global$1 = tinymce.util.Tools.resolve('tinymce.PluginManager');
 
-var instantiate = function (id) {
-  var actual = defs[id];
-  var dependencies = actual.deps;
-  var definition = actual.defn;
-  var len = dependencies.length;
-  var instances = new Array(len);
-  for (var i = 0; i < len; ++i)
-    instances[i] = dem(dependencies[i]);
-  var defResult = definition.apply(null, instances);
-  if (defResult === undefined)
-     throw 'module [' + id + '] returned undefined';
-  actual.instance = defResult;
-};
+    var global = tinymce.util.Tools.resolve('tinymce.Env');
 
-var def = function (id, dependencies, definition) {
-  if (typeof id !== 'string')
-    throw 'module id must be a string';
-  else if (dependencies === undefined)
-    throw 'no dependencies for ' + id;
-  else if (definition === undefined)
-    throw 'no definition function for ' + id;
-  defs[id] = {
-    deps: dependencies,
-    defn: definition,
-    instance: undefined
-  };
-};
+    const fireResizeEditor = editor => editor.dispatch('ResizeEditor');
 
-var dem = function (id) {
-  var actual = defs[id];
-  if (actual === undefined)
-    throw 'module [' + id + '] was undefined';
-  else if (actual.instance === undefined)
-    instantiate(id);
-  return actual.instance;
-};
+    const option = name => editor => editor.options.get(name);
+    const register$1 = editor => {
+      const registerOption = editor.options.register;
+      registerOption('autoresize_overflow_padding', {
+        processor: 'number',
+        default: 1
+      });
+      registerOption('autoresize_bottom_margin', {
+        processor: 'number',
+        default: 50
+      });
+    };
+    const getMinHeight = option('min_height');
+    const getMaxHeight = option('max_height');
+    const getAutoResizeOverflowPadding = option('autoresize_overflow_padding');
+    const getAutoResizeBottomMargin = option('autoresize_bottom_margin');
 
-var req = function (ids, callback) {
-  var len = ids.length;
-  var instances = new Array(len);
-  for (var i = 0; i < len; ++i)
-    instances.push(dem(ids[i]));
-  callback.apply(null, callback);
-};
-
-var ephox = {};
-
-ephox.bolt = {
-  module: {
-    api: {
-      define: def,
-      require: req,
-      demand: dem
-    }
-  }
-};
-
-var define = def;
-var require = req;
-var demand = dem;
-// this helps with minificiation when using a lot of global references
-var defineGlobal = function (id, ref) {
-  define(id, [], function () { return ref; });
-};
-/*jsc
-["tinymce.plugins.autoresize.Plugin","tinymce.core.dom.DOMUtils","tinymce.core.Env","tinymce.core.PluginManager","tinymce.core.util.Delay","global!tinymce.util.Tools.resolve"]
-jsc*/
-defineGlobal("global!tinymce.util.Tools.resolve", tinymce.util.Tools.resolve);
-/**
- * ResolveGlobal.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.core.dom.DOMUtils',
-  [
-    'global!tinymce.util.Tools.resolve'
-  ],
-  function (resolve) {
-    return resolve('tinymce.dom.DOMUtils');
-  }
-);
-
-/**
- * ResolveGlobal.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.core.Env',
-  [
-    'global!tinymce.util.Tools.resolve'
-  ],
-  function (resolve) {
-    return resolve('tinymce.Env');
-  }
-);
-
-/**
- * ResolveGlobal.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.core.PluginManager',
-  [
-    'global!tinymce.util.Tools.resolve'
-  ],
-  function (resolve) {
-    return resolve('tinymce.PluginManager');
-  }
-);
-
-/**
- * ResolveGlobal.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.core.util.Delay',
-  [
-    'global!tinymce.util.Tools.resolve'
-  ],
-  function (resolve) {
-    return resolve('tinymce.util.Delay');
-  }
-);
-
-/**
- * Plugin.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-/**
- * This class contains all core logic for the autoresize plugin.
- *
- * @class tinymce.autoresize.Plugin
- * @private
- */
-define(
-  'tinymce.plugins.autoresize.Plugin',
-  [
-    'tinymce.core.dom.DOMUtils',
-    'tinymce.core.Env',
-    'tinymce.core.PluginManager',
-    'tinymce.core.util.Delay'
-  ],
-  function (DOMUtils, Env, PluginManager, Delay) {
-    var DOM = DOMUtils.DOM;
-
-    PluginManager.add('autoresize', function (editor) {
-      var settings = editor.settings, oldSize = 0;
-
-      function isFullscreen() {
-        return editor.plugins.fullscreen && editor.plugins.fullscreen.isFullscreen();
-      }
-
-      if (editor.settings.inline) {
-        return;
-      }
-
-      /**
-       * This method gets executed each time the editor needs to resize.
-       */
-      function resize(e) {
-        var deltaSize, doc, body, docElm, resizeHeight, myHeight,
-          marginTop, marginBottom, paddingTop, paddingBottom, borderTop, borderBottom;
-
-        doc = editor.getDoc();
-        if (!doc) {
-          return;
-        }
-
-        body = doc.body;
-        docElm = doc.documentElement;
-        resizeHeight = settings.autoresize_min_height;
-
-        if (!body || (e && e.type === "setcontent" && e.initial) || isFullscreen()) {
-          if (body && docElm) {
-            body.style.overflowY = "auto";
-            docElm.style.overflowY = "auto"; // Old IE
-          }
-
-          return;
-        }
-
-        // Calculate outer height of the body element using CSS styles
-        marginTop = editor.dom.getStyle(body, 'margin-top', true);
-        marginBottom = editor.dom.getStyle(body, 'margin-bottom', true);
-        paddingTop = editor.dom.getStyle(body, 'padding-top', true);
-        paddingBottom = editor.dom.getStyle(body, 'padding-bottom', true);
-        borderTop = editor.dom.getStyle(body, 'border-top-width', true);
-        borderBottom = editor.dom.getStyle(body, 'border-bottom-width', true);
-        myHeight = body.offsetHeight + parseInt(marginTop, 10) + parseInt(marginBottom, 10) +
-          parseInt(paddingTop, 10) + parseInt(paddingBottom, 10) +
-          parseInt(borderTop, 10) + parseInt(borderBottom, 10);
-
-        // Make sure we have a valid height
-        if (isNaN(myHeight) || myHeight <= 0) {
-          // Get height differently depending on the browser used
-          // eslint-disable-next-line no-nested-ternary
-          myHeight = Env.ie ? body.scrollHeight : (Env.webkit && body.clientHeight === 0 ? 0 : body.offsetHeight);
-        }
-
-        // Don't make it smaller than the minimum height
-        if (myHeight > settings.autoresize_min_height) {
-          resizeHeight = myHeight;
-        }
-
-        // If a maximum height has been defined don't exceed this height
-        if (settings.autoresize_max_height && myHeight > settings.autoresize_max_height) {
-          resizeHeight = settings.autoresize_max_height;
-          body.style.overflowY = "auto";
-          docElm.style.overflowY = "auto"; // Old IE
-        } else {
-          body.style.overflowY = "hidden";
-          docElm.style.overflowY = "hidden"; // Old IE
+    const isFullscreen = editor => editor.plugins.fullscreen && editor.plugins.fullscreen.isFullscreen();
+    const toggleScrolling = (editor, state) => {
+      const body = editor.getBody();
+      if (body) {
+        body.style.overflowY = state ? '' : 'hidden';
+        if (!state) {
           body.scrollTop = 0;
         }
-
-        // Resize content element
-        if (resizeHeight !== oldSize) {
-          deltaSize = resizeHeight - oldSize;
-          DOM.setStyle(editor.iframeElement, 'height', resizeHeight + 'px');
-          oldSize = resizeHeight;
-
-          // WebKit doesn't decrease the size of the body element until the iframe gets resized
-          // So we need to continue to resize the iframe down until the size gets fixed
-          if (Env.webKit && deltaSize < 0) {
-            resize(e);
-          }
+      }
+    };
+    const parseCssValueToInt = (dom, elm, name, computed) => {
+      var _a;
+      const value = parseInt((_a = dom.getStyle(elm, name, computed)) !== null && _a !== void 0 ? _a : '', 10);
+      return isNaN(value) ? 0 : value;
+    };
+    const shouldScrollIntoView = trigger => {
+      if ((trigger === null || trigger === void 0 ? void 0 : trigger.type.toLowerCase()) === 'setcontent') {
+        const setContentEvent = trigger;
+        return setContentEvent.selection === true || setContentEvent.paste === true;
+      } else {
+        return false;
+      }
+    };
+    const resize = (editor, oldSize, trigger, getExtraMarginBottom) => {
+      var _a;
+      const dom = editor.dom;
+      const doc = editor.getDoc();
+      if (!doc) {
+        return;
+      }
+      if (isFullscreen(editor)) {
+        toggleScrolling(editor, true);
+        return;
+      }
+      const docEle = doc.documentElement;
+      const resizeBottomMargin = getExtraMarginBottom ? getExtraMarginBottom() : getAutoResizeOverflowPadding(editor);
+      const minHeight = (_a = getMinHeight(editor)) !== null && _a !== void 0 ? _a : editor.getElement().offsetHeight;
+      let resizeHeight = minHeight;
+      const marginTop = parseCssValueToInt(dom, docEle, 'margin-top', true);
+      const marginBottom = parseCssValueToInt(dom, docEle, 'margin-bottom', true);
+      let contentHeight = docEle.offsetHeight + marginTop + marginBottom + resizeBottomMargin;
+      if (contentHeight < 0) {
+        contentHeight = 0;
+      }
+      const containerHeight = editor.getContainer().offsetHeight;
+      const contentAreaHeight = editor.getContentAreaContainer().offsetHeight;
+      const chromeHeight = containerHeight - contentAreaHeight;
+      if (contentHeight + chromeHeight > minHeight) {
+        resizeHeight = contentHeight + chromeHeight;
+      }
+      const maxHeight = getMaxHeight(editor);
+      if (maxHeight && resizeHeight > maxHeight) {
+        resizeHeight = maxHeight;
+        toggleScrolling(editor, true);
+      } else {
+        toggleScrolling(editor, false);
+      }
+      const old = oldSize.get();
+      if (old.set) {
+        editor.dom.setStyles(editor.getDoc().documentElement, { 'min-height': 0 });
+        editor.dom.setStyles(editor.getBody(), { 'min-height': 'inherit' });
+      }
+      if (resizeHeight !== old.totalHeight && (contentHeight - resizeBottomMargin !== old.contentHeight || !old.set)) {
+        const deltaSize = resizeHeight - old.totalHeight;
+        dom.setStyle(editor.getContainer(), 'height', resizeHeight + 'px');
+        oldSize.set({
+          totalHeight: resizeHeight,
+          contentHeight,
+          set: true
+        });
+        fireResizeEditor(editor);
+        if (global.browser.isSafari() && (global.os.isMacOS() || global.os.isiOS())) {
+          const win = editor.getWin();
+          win.scrollTo(win.pageXOffset, win.pageYOffset);
+        }
+        if (editor.hasFocus() && shouldScrollIntoView(trigger)) {
+          editor.selection.scrollIntoView();
+        }
+        if ((global.browser.isSafari() || global.browser.isChromium()) && deltaSize < 0) {
+          resize(editor, oldSize, trigger, getExtraMarginBottom);
         }
       }
-
-      /**
-       * Calls the resize x times in 100ms intervals. We can't wait for load events since
-       * the CSS files might load async.
-       */
-      function wait(times, interval, callback) {
-        Delay.setEditorTimeout(editor, function () {
-          resize({});
-
-          if (times--) {
-            wait(times, interval, callback);
-          } else if (callback) {
-            callback();
-          }
-        }, interval);
-      }
-
-      // Define minimum height
-      settings.autoresize_min_height = parseInt(editor.getParam('autoresize_min_height', editor.getElement().offsetHeight), 10);
-
-      // Define maximum height
-      settings.autoresize_max_height = parseInt(editor.getParam('autoresize_max_height', 0), 10);
-
-      // Add padding at the bottom for better UX
-      editor.on("init", function () {
-        var overflowPadding, bottomMargin;
-
-        overflowPadding = editor.getParam('autoresize_overflow_padding', 1);
-        bottomMargin = editor.getParam('autoresize_bottom_margin', 50);
-
-        if (overflowPadding !== false) {
-          editor.dom.setStyles(editor.getBody(), {
+    };
+    const setup = (editor, oldSize) => {
+      const getExtraMarginBottom = () => getAutoResizeBottomMargin(editor);
+      editor.on('init', e => {
+        const overflowPadding = getAutoResizeOverflowPadding(editor);
+        const dom = editor.dom;
+        dom.setStyles(editor.getDoc().documentElement, { height: 'auto' });
+        if (global.browser.isEdge() || global.browser.isIE()) {
+          dom.setStyles(editor.getBody(), {
+            'paddingLeft': overflowPadding,
+            'paddingRight': overflowPadding,
+            'min-height': 0
+          });
+        } else {
+          dom.setStyles(editor.getBody(), {
             paddingLeft: overflowPadding,
             paddingRight: overflowPadding
           });
         }
+        resize(editor, oldSize, e, getExtraMarginBottom);
+      });
+      editor.on('NodeChange SetContent keyup FullscreenStateChanged ResizeContent', e => {
+        resize(editor, oldSize, e, getExtraMarginBottom);
+      });
+    };
 
-        if (bottomMargin !== false) {
-          editor.dom.setStyles(editor.getBody(), {
-            paddingBottom: bottomMargin
+    const register = (editor, oldSize) => {
+      editor.addCommand('mceAutoResize', () => {
+        resize(editor, oldSize);
+      });
+    };
+
+    var Plugin = () => {
+      global$1.add('autoresize', editor => {
+        register$1(editor);
+        if (!editor.options.isSet('resize')) {
+          editor.options.set('resize', false);
+        }
+        if (!editor.inline) {
+          const oldSize = Cell({
+            totalHeight: 0,
+            contentHeight: 0,
+            set: false
           });
+          register(editor, oldSize);
+          setup(editor, oldSize);
         }
       });
+    };
 
-      // Add appropriate listeners for resizing content area
-      editor.on("nodechange setcontent keyup FullscreenStateChanged", resize);
+    Plugin();
 
-      if (editor.getParam('autoresize_on_init', true)) {
-        editor.on('init', function () {
-          // Hit it 20 times in 100 ms intervals
-          wait(20, 100, function () {
-            // Hit it 5 times in 1 sec intervals
-            wait(5, 1000);
-          });
-        });
-      }
-
-      // Register the command so that it can be invoked by using tinyMCE.activeEditor.execCommand('mceExample');
-      editor.addCommand('mceAutoResize', resize);
-    });
-
-    return function () {};
-  }
-);
-dem('tinymce.plugins.autoresize.Plugin')();
 })();

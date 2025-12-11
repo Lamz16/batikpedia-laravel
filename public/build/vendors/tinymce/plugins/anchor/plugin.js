@@ -1,235 +1,214 @@
+/**
+ * TinyMCE version 7.2.0 (2024-06-19)
+ */
+
 (function () {
+    'use strict';
 
-var defs = {}; // id -> {dependencies, definition, instance (possibly undefined)}
+    var global$2 = tinymce.util.Tools.resolve('tinymce.PluginManager');
 
-// Used when there is no 'main' module.
-// The name is probably (hopefully) unique so minification removes for releases.
-var register_3795 = function (id) {
-  var module = dem(id);
-  var fragments = id.split('.');
-  var target = Function('return this;')();
-  for (var i = 0; i < fragments.length - 1; ++i) {
-    if (target[fragments[i]] === undefined)
-      target[fragments[i]] = {};
-    target = target[fragments[i]];
-  }
-  target[fragments[fragments.length - 1]] = module;
-};
+    var global$1 = tinymce.util.Tools.resolve('tinymce.dom.RangeUtils');
 
-var instantiate = function (id) {
-  var actual = defs[id];
-  var dependencies = actual.deps;
-  var definition = actual.defn;
-  var len = dependencies.length;
-  var instances = new Array(len);
-  for (var i = 0; i < len; ++i)
-    instances[i] = dem(dependencies[i]);
-  var defResult = definition.apply(null, instances);
-  if (defResult === undefined)
-     throw 'module [' + id + '] returned undefined';
-  actual.instance = defResult;
-};
+    var global = tinymce.util.Tools.resolve('tinymce.util.Tools');
 
-var def = function (id, dependencies, definition) {
-  if (typeof id !== 'string')
-    throw 'module id must be a string';
-  else if (dependencies === undefined)
-    throw 'no dependencies for ' + id;
-  else if (definition === undefined)
-    throw 'no definition function for ' + id;
-  defs[id] = {
-    deps: dependencies,
-    defn: definition,
-    instance: undefined
-  };
-};
+    const option = name => editor => editor.options.get(name);
+    const register$2 = editor => {
+      const registerOption = editor.options.register;
+      registerOption('allow_html_in_named_anchor', {
+        processor: 'boolean',
+        default: false
+      });
+    };
+    const allowHtmlInNamedAnchor = option('allow_html_in_named_anchor');
 
-var dem = function (id) {
-  var actual = defs[id];
-  if (actual === undefined)
-    throw 'module [' + id + '] was undefined';
-  else if (actual.instance === undefined)
-    instantiate(id);
-  return actual.instance;
-};
+    const namedAnchorSelector = 'a:not([href])';
+    const isEmptyString = str => !str;
+    const getIdFromAnchor = elm => {
+      const id = elm.getAttribute('id') || elm.getAttribute('name');
+      return id || '';
+    };
+    const isAnchor = elm => elm.nodeName.toLowerCase() === 'a';
+    const isNamedAnchor = elm => isAnchor(elm) && !elm.getAttribute('href') && getIdFromAnchor(elm) !== '';
+    const isEmptyNamedAnchor = elm => isNamedAnchor(elm) && !elm.firstChild;
 
-var req = function (ids, callback) {
-  var len = ids.length;
-  var instances = new Array(len);
-  for (var i = 0; i < len; ++i)
-    instances.push(dem(ids[i]));
-  callback.apply(null, callback);
-};
-
-var ephox = {};
-
-ephox.bolt = {
-  module: {
-    api: {
-      define: def,
-      require: req,
-      demand: dem
-    }
-  }
-};
-
-var define = def;
-var require = req;
-var demand = dem;
-// this helps with minificiation when using a lot of global references
-var defineGlobal = function (id, ref) {
-  define(id, [], function () { return ref; });
-};
-/*jsc
-["tinymce.plugins.anchor.Plugin","tinymce.core.Env","tinymce.core.PluginManager","global!tinymce.util.Tools.resolve"]
-jsc*/
-defineGlobal("global!tinymce.util.Tools.resolve", tinymce.util.Tools.resolve);
-/**
- * ResolveGlobal.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.core.Env',
-  [
-    'global!tinymce.util.Tools.resolve'
-  ],
-  function (resolve) {
-    return resolve('tinymce.Env');
-  }
-);
-
-/**
- * ResolveGlobal.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.core.PluginManager',
-  [
-    'global!tinymce.util.Tools.resolve'
-  ],
-  function (resolve) {
-    return resolve('tinymce.PluginManager');
-  }
-);
-
-/**
- * Plugin.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-/**
- * This class contains all core logic for the anchor plugin.
- *
- * @class tinymce.anchor.Plugin
- * @private
- */
-define(
-  'tinymce.plugins.anchor.Plugin',
-  [
-    'tinymce.core.Env',
-    'tinymce.core.PluginManager'
-  ],
-
-  function (Env, PluginManager) {
-    PluginManager.add('anchor', function (editor) {
-      var isAnchorNode = function (node) {
-        return !node.attr('href') && (node.attr('id') || node.attr('name')) && !node.firstChild;
-      };
-
-      var setContentEditable = function (state) {
-        return function (nodes) {
-          for (var i = 0; i < nodes.length; i++) {
-            if (isAnchorNode(nodes[i])) {
-              nodes[i].attr('contenteditable', state);
-            }
-          }
-        };
-      };
-
-      var isValidId = function (id) {
-        // Follows HTML4 rules: https://www.w3.org/TR/html401/types.html#type-id
-        return /^[A-Za-z][A-Za-z0-9\-:._]*$/.test(id);
-      };
-
-      var showDialog = function () {
-        var selectedNode = editor.selection.getNode();
-        var isAnchor = selectedNode.tagName == 'A' && editor.dom.getAttrib(selectedNode, 'href') === '';
-        var value = '';
-
-        if (isAnchor) {
-          value = selectedNode.id || selectedNode.name || '';
-        }
-
-        editor.windowManager.open({
-          title: 'Anchor',
-          body: { type: 'textbox', name: 'id', size: 40, label: 'Id', value: value },
-          onsubmit: function (e) {
-            var id = e.data.id;
-
-            if (!isValidId(id)) {
-              e.preventDefault();
-              editor.windowManager.alert(
-                'Id should start with a letter, followed only by letters, numbers, dashes, dots, colons or underscores.'
-              );
-              return;
-            }
-
-            if (isAnchor) {
-              selectedNode.removeAttribute('name');
-              selectedNode.id = id;
-            } else {
-              editor.selection.collapse(true);
-              editor.execCommand('mceInsertContent', false, editor.dom.createHTML('a', {
-                id: id
-              }));
-            }
+    const removeEmptyNamedAnchorsInSelection = editor => {
+      const dom = editor.dom;
+      global$1(dom).walk(editor.selection.getRng(), nodes => {
+        global.each(nodes, node => {
+          if (isEmptyNamedAnchor(node)) {
+            dom.remove(node, false);
           }
         });
-      };
-
-      if (Env.ceFalse) {
-        editor.on('PreInit', function () {
-          editor.parser.addNodeFilter('a', setContentEditable('false'));
-          editor.serializer.addNodeFilter('a', setContentEditable(null));
-        });
+      });
+    };
+    const isValidId = id => /^[A-Za-z][A-Za-z0-9\-:._]*$/.test(id);
+    const getNamedAnchor = editor => editor.dom.getParent(editor.selection.getStart(), namedAnchorSelector);
+    const getId = editor => {
+      const anchor = getNamedAnchor(editor);
+      if (anchor) {
+        return getIdFromAnchor(anchor);
+      } else {
+        return '';
       }
+    };
+    const createAnchor = (editor, id) => {
+      editor.undoManager.transact(() => {
+        if (!allowHtmlInNamedAnchor(editor)) {
+          editor.selection.collapse(true);
+        }
+        if (editor.selection.isCollapsed()) {
+          editor.insertContent(editor.dom.createHTML('a', { id }));
+        } else {
+          removeEmptyNamedAnchorsInSelection(editor);
+          editor.formatter.remove('namedAnchor', undefined, undefined, true);
+          editor.formatter.apply('namedAnchor', { value: id });
+          editor.addVisual();
+        }
+      });
+    };
+    const updateAnchor = (editor, id, anchorElement) => {
+      anchorElement.removeAttribute('name');
+      anchorElement.id = id;
+      editor.addVisual();
+      editor.undoManager.add();
+    };
+    const insert = (editor, id) => {
+      const anchor = getNamedAnchor(editor);
+      if (anchor) {
+        updateAnchor(editor, id, anchor);
+      } else {
+        createAnchor(editor, id);
+      }
+      editor.focus();
+    };
 
-      editor.addCommand('mceAnchor', showDialog);
+    const insertAnchor = (editor, newId) => {
+      if (!isValidId(newId)) {
+        editor.windowManager.alert('ID should start with a letter, followed only by letters, numbers, dashes, dots, colons or underscores.');
+        return false;
+      } else {
+        insert(editor, newId);
+        return true;
+      }
+    };
+    const open = editor => {
+      const currentId = getId(editor);
+      editor.windowManager.open({
+        title: 'Anchor',
+        size: 'normal',
+        body: {
+          type: 'panel',
+          items: [{
+              name: 'id',
+              type: 'input',
+              label: 'ID',
+              placeholder: 'example'
+            }]
+        },
+        buttons: [
+          {
+            type: 'cancel',
+            name: 'cancel',
+            text: 'Cancel'
+          },
+          {
+            type: 'submit',
+            name: 'save',
+            text: 'Save',
+            primary: true
+          }
+        ],
+        initialData: { id: currentId },
+        onSubmit: api => {
+          if (insertAnchor(editor, api.getData().id)) {
+            api.close();
+          }
+        }
+      });
+    };
 
-      editor.addButton('anchor', {
-        icon: 'anchor',
+    const register$1 = editor => {
+      editor.addCommand('mceAnchor', () => {
+        open(editor);
+      });
+    };
+
+    const isNamedAnchorNode = node => isEmptyString(node.attr('href')) && !isEmptyString(node.attr('id') || node.attr('name'));
+    const isEmptyNamedAnchorNode = node => isNamedAnchorNode(node) && !node.firstChild;
+    const setContentEditable = state => nodes => {
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        if (isEmptyNamedAnchorNode(node)) {
+          node.attr('contenteditable', state);
+        }
+      }
+    };
+    const setup = editor => {
+      editor.on('PreInit', () => {
+        editor.parser.addNodeFilter('a', setContentEditable('false'));
+        editor.serializer.addNodeFilter('a', setContentEditable(null));
+      });
+    };
+
+    const registerFormats = editor => {
+      editor.formatter.register('namedAnchor', {
+        inline: 'a',
+        selector: namedAnchorSelector,
+        remove: 'all',
+        split: true,
+        deep: true,
+        attributes: { id: '%value' },
+        onmatch: (node, _fmt, _itemName) => {
+          return isNamedAnchor(node);
+        }
+      });
+    };
+
+    const onSetupEditable = editor => api => {
+      const nodeChanged = () => {
+        api.setEnabled(editor.selection.isEditable());
+      };
+      editor.on('NodeChange', nodeChanged);
+      nodeChanged();
+      return () => {
+        editor.off('NodeChange', nodeChanged);
+      };
+    };
+    const register = editor => {
+      const onAction = () => editor.execCommand('mceAnchor');
+      editor.ui.registry.addToggleButton('anchor', {
+        icon: 'bookmark',
         tooltip: 'Anchor',
-        onclick: showDialog,
-        stateSelector: 'a:not([href])'
+        onAction,
+        onSetup: buttonApi => {
+          const unbindSelectorChanged = editor.selection.selectorChangedWithUnbind('a:not([href])', buttonApi.setActive).unbind;
+          const unbindEditableChanged = onSetupEditable(editor)(buttonApi);
+          return () => {
+            unbindSelectorChanged();
+            unbindEditableChanged();
+          };
+        }
       });
-
-      editor.addMenuItem('anchor', {
-        icon: 'anchor',
-        text: 'Anchor',
-        context: 'insert',
-        onclick: showDialog
+      editor.ui.registry.addMenuItem('anchor', {
+        icon: 'bookmark',
+        text: 'Anchor...',
+        onAction,
+        onSetup: onSetupEditable(editor)
       });
-    });
+    };
 
-    return function () { };
-  }
-);
-dem('tinymce.plugins.anchor.Plugin')();
+    var Plugin = () => {
+      global$2.add('anchor', editor => {
+        register$2(editor);
+        setup(editor);
+        register$1(editor);
+        register(editor);
+        editor.on('PreInit', () => {
+          registerFormats(editor);
+        });
+      });
+    };
+
+    Plugin();
+
 })();

@@ -1,1479 +1,1865 @@
+/**
+ * TinyMCE version 7.2.0 (2024-06-19)
+ */
+
 (function () {
+    'use strict';
 
-var defs = {}; // id -> {dependencies, definition, instance (possibly undefined)}
+    var global$7 = tinymce.util.Tools.resolve('tinymce.PluginManager');
 
-// Used when there is no 'main' module.
-// The name is probably (hopefully) unique so minification removes for releases.
-var register_3795 = function (id) {
-  var module = dem(id);
-  var fragments = id.split('.');
-  var target = Function('return this;')();
-  for (var i = 0; i < fragments.length - 1; ++i) {
-    if (target[fragments[i]] === undefined)
-      target[fragments[i]] = {};
-    target = target[fragments[i]];
-  }
-  target[fragments[fragments.length - 1]] = module;
-};
+    const hasProto = (v, constructor, predicate) => {
+      var _a;
+      if (predicate(v, constructor.prototype)) {
+        return true;
+      } else {
+        return ((_a = v.constructor) === null || _a === void 0 ? void 0 : _a.name) === constructor.name;
+      }
+    };
+    const typeOf = x => {
+      const t = typeof x;
+      if (x === null) {
+        return 'null';
+      } else if (t === 'object' && Array.isArray(x)) {
+        return 'array';
+      } else if (t === 'object' && hasProto(x, String, (o, proto) => proto.isPrototypeOf(o))) {
+        return 'string';
+      } else {
+        return t;
+      }
+    };
+    const isType$1 = type => value => typeOf(value) === type;
+    const isSimpleType = type => value => typeof value === type;
+    const isString = isType$1('string');
+    const isObject = isType$1('object');
+    const isArray = isType$1('array');
+    const isBoolean = isSimpleType('boolean');
+    const isNullable = a => a === null || a === undefined;
+    const isNonNullable = a => !isNullable(a);
+    const isFunction = isSimpleType('function');
+    const isNumber = isSimpleType('number');
 
-var instantiate = function (id) {
-  var actual = defs[id];
-  var dependencies = actual.deps;
-  var definition = actual.defn;
-  var len = dependencies.length;
-  var instances = new Array(len);
-  for (var i = 0; i < len; ++i)
-    instances[i] = dem(dependencies[i]);
-  var defResult = definition.apply(null, instances);
-  if (defResult === undefined)
-     throw 'module [' + id + '] returned undefined';
-  actual.instance = defResult;
-};
-
-var def = function (id, dependencies, definition) {
-  if (typeof id !== 'string')
-    throw 'module id must be a string';
-  else if (dependencies === undefined)
-    throw 'no dependencies for ' + id;
-  else if (definition === undefined)
-    throw 'no definition function for ' + id;
-  defs[id] = {
-    deps: dependencies,
-    defn: definition,
-    instance: undefined
-  };
-};
-
-var dem = function (id) {
-  var actual = defs[id];
-  if (actual === undefined)
-    throw 'module [' + id + '] was undefined';
-  else if (actual.instance === undefined)
-    instantiate(id);
-  return actual.instance;
-};
-
-var req = function (ids, callback) {
-  var len = ids.length;
-  var instances = new Array(len);
-  for (var i = 0; i < len; ++i)
-    instances.push(dem(ids[i]));
-  callback.apply(null, callback);
-};
-
-var ephox = {};
-
-ephox.bolt = {
-  module: {
-    api: {
-      define: def,
-      require: req,
-      demand: dem
+    const noop = () => {
+    };
+    const compose1 = (fbc, fab) => a => fbc(fab(a));
+    const constant = value => {
+      return () => {
+        return value;
+      };
+    };
+    const tripleEquals = (a, b) => {
+      return a === b;
+    };
+    function curry(fn, ...initialArgs) {
+      return (...restArgs) => {
+        const all = initialArgs.concat(restArgs);
+        return fn.apply(null, all);
+      };
     }
-  }
-};
+    const not = f => t => !f(t);
+    const never = constant(false);
 
-var define = def;
-var require = req;
-var demand = dem;
-// this helps with minificiation when using a lot of global references
-var defineGlobal = function (id, ref) {
-  define(id, [], function () { return ref; });
-};
-/*jsc
-["tinymce.plugins.lists.Plugin","tinymce.core.PluginManager","tinymce.core.util.Tools","tinymce.core.util.VK","tinymce.plugins.lists.actions.Indent","tinymce.plugins.lists.actions.Outdent","tinymce.plugins.lists.actions.ToggleList","tinymce.plugins.lists.core.Delete","tinymce.plugins.lists.core.NodeType","global!tinymce.util.Tools.resolve","tinymce.core.dom.DOMUtils","tinymce.plugins.lists.core.Bookmark","tinymce.plugins.lists.core.Selection","tinymce.plugins.lists.core.NormalizeLists","tinymce.plugins.lists.core.SplitList","tinymce.plugins.lists.core.TextBlock","tinymce.core.dom.BookmarkManager","tinymce.core.dom.RangeUtils","tinymce.core.dom.TreeWalker","tinymce.plugins.lists.core.Range","tinymce.core.Env"]
-jsc*/
-defineGlobal("global!tinymce.util.Tools.resolve", tinymce.util.Tools.resolve);
-/**
- * ResolveGlobal.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
+    class Optional {
+      constructor(tag, value) {
+        this.tag = tag;
+        this.value = value;
+      }
+      static some(value) {
+        return new Optional(true, value);
+      }
+      static none() {
+        return Optional.singletonNone;
+      }
+      fold(onNone, onSome) {
+        if (this.tag) {
+          return onSome(this.value);
+        } else {
+          return onNone();
+        }
+      }
+      isSome() {
+        return this.tag;
+      }
+      isNone() {
+        return !this.tag;
+      }
+      map(mapper) {
+        if (this.tag) {
+          return Optional.some(mapper(this.value));
+        } else {
+          return Optional.none();
+        }
+      }
+      bind(binder) {
+        if (this.tag) {
+          return binder(this.value);
+        } else {
+          return Optional.none();
+        }
+      }
+      exists(predicate) {
+        return this.tag && predicate(this.value);
+      }
+      forall(predicate) {
+        return !this.tag || predicate(this.value);
+      }
+      filter(predicate) {
+        if (!this.tag || predicate(this.value)) {
+          return this;
+        } else {
+          return Optional.none();
+        }
+      }
+      getOr(replacement) {
+        return this.tag ? this.value : replacement;
+      }
+      or(replacement) {
+        return this.tag ? this : replacement;
+      }
+      getOrThunk(thunk) {
+        return this.tag ? this.value : thunk();
+      }
+      orThunk(thunk) {
+        return this.tag ? this : thunk();
+      }
+      getOrDie(message) {
+        if (!this.tag) {
+          throw new Error(message !== null && message !== void 0 ? message : 'Called getOrDie on None');
+        } else {
+          return this.value;
+        }
+      }
+      static from(value) {
+        return isNonNullable(value) ? Optional.some(value) : Optional.none();
+      }
+      getOrNull() {
+        return this.tag ? this.value : null;
+      }
+      getOrUndefined() {
+        return this.value;
+      }
+      each(worker) {
+        if (this.tag) {
+          worker(this.value);
+        }
+      }
+      toArray() {
+        return this.tag ? [this.value] : [];
+      }
+      toString() {
+        return this.tag ? `some(${ this.value })` : 'none()';
+      }
+    }
+    Optional.singletonNone = new Optional(false);
 
-define(
-  'tinymce.core.PluginManager',
-  [
-    'global!tinymce.util.Tools.resolve'
-  ],
-  function (resolve) {
-    return resolve('tinymce.PluginManager');
-  }
-);
-
-/**
- * ResolveGlobal.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.core.util.Tools',
-  [
-    'global!tinymce.util.Tools.resolve'
-  ],
-  function (resolve) {
-    return resolve('tinymce.util.Tools');
-  }
-);
-
-/**
- * ResolveGlobal.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.core.util.VK',
-  [
-    'global!tinymce.util.Tools.resolve'
-  ],
-  function (resolve) {
-    return resolve('tinymce.util.VK');
-  }
-);
-
-/**
- * ResolveGlobal.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.core.dom.DOMUtils',
-  [
-    'global!tinymce.util.Tools.resolve'
-  ],
-  function (resolve) {
-    return resolve('tinymce.dom.DOMUtils');
-  }
-);
-
-/**
- * NodeType.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.plugins.lists.core.NodeType',
-  [
-  ],
-  function () {
-    var isTextNode = function (node) {
-      return node && node.nodeType === 3;
+    const nativeSlice = Array.prototype.slice;
+    const nativeIndexOf = Array.prototype.indexOf;
+    const nativePush = Array.prototype.push;
+    const rawIndexOf = (ts, t) => nativeIndexOf.call(ts, t);
+    const contains$1 = (xs, x) => rawIndexOf(xs, x) > -1;
+    const exists = (xs, pred) => {
+      for (let i = 0, len = xs.length; i < len; i++) {
+        const x = xs[i];
+        if (pred(x, i)) {
+          return true;
+        }
+      }
+      return false;
+    };
+    const map = (xs, f) => {
+      const len = xs.length;
+      const r = new Array(len);
+      for (let i = 0; i < len; i++) {
+        const x = xs[i];
+        r[i] = f(x, i);
+      }
+      return r;
+    };
+    const each$1 = (xs, f) => {
+      for (let i = 0, len = xs.length; i < len; i++) {
+        const x = xs[i];
+        f(x, i);
+      }
+    };
+    const filter$1 = (xs, pred) => {
+      const r = [];
+      for (let i = 0, len = xs.length; i < len; i++) {
+        const x = xs[i];
+        if (pred(x, i)) {
+          r.push(x);
+        }
+      }
+      return r;
+    };
+    const groupBy = (xs, f) => {
+      if (xs.length === 0) {
+        return [];
+      } else {
+        let wasType = f(xs[0]);
+        const r = [];
+        let group = [];
+        for (let i = 0, len = xs.length; i < len; i++) {
+          const x = xs[i];
+          const type = f(x);
+          if (type !== wasType) {
+            r.push(group);
+            group = [];
+          }
+          wasType = type;
+          group.push(x);
+        }
+        if (group.length !== 0) {
+          r.push(group);
+        }
+        return r;
+      }
+    };
+    const foldl = (xs, f, acc) => {
+      each$1(xs, (x, i) => {
+        acc = f(acc, x, i);
+      });
+      return acc;
+    };
+    const findUntil = (xs, pred, until) => {
+      for (let i = 0, len = xs.length; i < len; i++) {
+        const x = xs[i];
+        if (pred(x, i)) {
+          return Optional.some(x);
+        } else if (until(x, i)) {
+          break;
+        }
+      }
+      return Optional.none();
+    };
+    const find = (xs, pred) => {
+      return findUntil(xs, pred, never);
+    };
+    const flatten = xs => {
+      const r = [];
+      for (let i = 0, len = xs.length; i < len; ++i) {
+        if (!isArray(xs[i])) {
+          throw new Error('Arr.flatten item ' + i + ' was not an array, input: ' + xs);
+        }
+        nativePush.apply(r, xs[i]);
+      }
+      return r;
+    };
+    const bind = (xs, f) => flatten(map(xs, f));
+    const reverse = xs => {
+      const r = nativeSlice.call(xs, 0);
+      r.reverse();
+      return r;
+    };
+    const get$1 = (xs, i) => i >= 0 && i < xs.length ? Optional.some(xs[i]) : Optional.none();
+    const head = xs => get$1(xs, 0);
+    const last = xs => get$1(xs, xs.length - 1);
+    const unique = (xs, comparator) => {
+      const r = [];
+      const isDuplicated = isFunction(comparator) ? x => exists(r, i => comparator(i, x)) : x => contains$1(r, x);
+      for (let i = 0, len = xs.length; i < len; i++) {
+        const x = xs[i];
+        if (!isDuplicated(x)) {
+          r.push(x);
+        }
+      }
+      return r;
     };
 
-    var isListNode = function (node) {
-      return node && (/^(OL|UL|DL)$/).test(node.nodeName);
+    const is$2 = (lhs, rhs, comparator = tripleEquals) => lhs.exists(left => comparator(left, rhs));
+    const equals = (lhs, rhs, comparator = tripleEquals) => lift2(lhs, rhs, comparator).getOr(lhs.isNone() && rhs.isNone());
+    const lift2 = (oa, ob, f) => oa.isSome() && ob.isSome() ? Optional.some(f(oa.getOrDie(), ob.getOrDie())) : Optional.none();
+
+    const COMMENT = 8;
+    const DOCUMENT = 9;
+    const DOCUMENT_FRAGMENT = 11;
+    const ELEMENT = 1;
+    const TEXT = 3;
+
+    const fromHtml = (html, scope) => {
+      const doc = scope || document;
+      const div = doc.createElement('div');
+      div.innerHTML = html;
+      if (!div.hasChildNodes() || div.childNodes.length > 1) {
+        const message = 'HTML does not have a single root node';
+        console.error(message, html);
+        throw new Error(message);
+      }
+      return fromDom$1(div.childNodes[0]);
+    };
+    const fromTag = (tag, scope) => {
+      const doc = scope || document;
+      const node = doc.createElement(tag);
+      return fromDom$1(node);
+    };
+    const fromText = (text, scope) => {
+      const doc = scope || document;
+      const node = doc.createTextNode(text);
+      return fromDom$1(node);
+    };
+    const fromDom$1 = node => {
+      if (node === null || node === undefined) {
+        throw new Error('Node cannot be null or undefined');
+      }
+      return { dom: node };
+    };
+    const fromPoint = (docElm, x, y) => Optional.from(docElm.dom.elementFromPoint(x, y)).map(fromDom$1);
+    const SugarElement = {
+      fromHtml,
+      fromTag,
+      fromText,
+      fromDom: fromDom$1,
+      fromPoint
     };
 
-    var isListItemNode = function (node) {
-      return node && /^(LI|DT|DD)$/.test(node.nodeName);
+    const is$1 = (element, selector) => {
+      const dom = element.dom;
+      if (dom.nodeType !== ELEMENT) {
+        return false;
+      } else {
+        const elem = dom;
+        if (elem.matches !== undefined) {
+          return elem.matches(selector);
+        } else if (elem.msMatchesSelector !== undefined) {
+          return elem.msMatchesSelector(selector);
+        } else if (elem.webkitMatchesSelector !== undefined) {
+          return elem.webkitMatchesSelector(selector);
+        } else if (elem.mozMatchesSelector !== undefined) {
+          return elem.mozMatchesSelector(selector);
+        } else {
+          throw new Error('Browser lacks native selectors');
+        }
+      }
     };
 
-    var isBr = function (node) {
-      return node && node.nodeName === 'BR';
+    const eq = (e1, e2) => e1.dom === e2.dom;
+    const contains = (e1, e2) => {
+      const d1 = e1.dom;
+      const d2 = e2.dom;
+      return d1 === d2 ? false : d1.contains(d2);
+    };
+    const is = is$1;
+
+    const Global = typeof window !== 'undefined' ? window : Function('return this;')();
+
+    const path = (parts, scope) => {
+      let o = scope !== undefined && scope !== null ? scope : Global;
+      for (let i = 0; i < parts.length && o !== undefined && o !== null; ++i) {
+        o = o[parts[i]];
+      }
+      return o;
+    };
+    const resolve = (p, scope) => {
+      const parts = p.split('.');
+      return path(parts, scope);
     };
 
-    var isFirstChild = function (node) {
-      return node.parentNode.firstChild === node;
+    const unsafe = (name, scope) => {
+      return resolve(name, scope);
+    };
+    const getOrDie = (name, scope) => {
+      const actual = unsafe(name, scope);
+      if (actual === undefined || actual === null) {
+        throw new Error(name + ' not available on this browser');
+      }
+      return actual;
     };
 
-    var isLastChild = function (node) {
-      return node.parentNode.lastChild === node;
+    const getPrototypeOf = Object.getPrototypeOf;
+    const sandHTMLElement = scope => {
+      return getOrDie('HTMLElement', scope);
+    };
+    const isPrototypeOf = x => {
+      const scope = resolve('ownerDocument.defaultView', x);
+      return isObject(x) && (sandHTMLElement(scope).prototype.isPrototypeOf(x) || /^HTML\w*Element$/.test(getPrototypeOf(x).constructor.name));
     };
 
-    var isTextBlock = function (editor, node) {
-      return node && !!editor.schema.getTextBlockElements()[node.nodeName];
+    const name = element => {
+      const r = element.dom.nodeName;
+      return r.toLowerCase();
+    };
+    const type = element => element.dom.nodeType;
+    const isType = t => element => type(element) === t;
+    const isComment = element => type(element) === COMMENT || name(element) === '#comment';
+    const isHTMLElement = element => isElement$1(element) && isPrototypeOf(element.dom);
+    const isElement$1 = isType(ELEMENT);
+    const isText = isType(TEXT);
+    const isDocument = isType(DOCUMENT);
+    const isDocumentFragment = isType(DOCUMENT_FRAGMENT);
+    const isTag = tag => e => isElement$1(e) && name(e) === tag;
+
+    const owner = element => SugarElement.fromDom(element.dom.ownerDocument);
+    const documentOrOwner = dos => isDocument(dos) ? dos : owner(dos);
+    const parent = element => Optional.from(element.dom.parentNode).map(SugarElement.fromDom);
+    const parentElement = element => Optional.from(element.dom.parentElement).map(SugarElement.fromDom);
+    const nextSibling = element => Optional.from(element.dom.nextSibling).map(SugarElement.fromDom);
+    const children = element => map(element.dom.childNodes, SugarElement.fromDom);
+    const child = (element, index) => {
+      const cs = element.dom.childNodes;
+      return Optional.from(cs[index]).map(SugarElement.fromDom);
+    };
+    const firstChild = element => child(element, 0);
+    const lastChild = element => child(element, element.dom.childNodes.length - 1);
+
+    const isShadowRoot = dos => isDocumentFragment(dos) && isNonNullable(dos.dom.host);
+    const supported = isFunction(Element.prototype.attachShadow) && isFunction(Node.prototype.getRootNode);
+    const getRootNode = supported ? e => SugarElement.fromDom(e.dom.getRootNode()) : documentOrOwner;
+    const getShadowRoot = e => {
+      const r = getRootNode(e);
+      return isShadowRoot(r) ? Optional.some(r) : Optional.none();
+    };
+    const getShadowHost = e => SugarElement.fromDom(e.dom.host);
+
+    const inBody = element => {
+      const dom = isText(element) ? element.dom.parentNode : element.dom;
+      if (dom === undefined || dom === null || dom.ownerDocument === null) {
+        return false;
+      }
+      const doc = dom.ownerDocument;
+      return getShadowRoot(SugarElement.fromDom(dom)).fold(() => doc.body.contains(dom), compose1(inBody, getShadowHost));
     };
 
-    var isBogusBr = function (dom, node) {
+    var ClosestOrAncestor = (is, ancestor, scope, a, isRoot) => {
+      if (is(scope, a)) {
+        return Optional.some(scope);
+      } else if (isFunction(isRoot) && isRoot(scope)) {
+        return Optional.none();
+      } else {
+        return ancestor(scope, a, isRoot);
+      }
+    };
+
+    const ancestor$3 = (scope, predicate, isRoot) => {
+      let element = scope.dom;
+      const stop = isFunction(isRoot) ? isRoot : never;
+      while (element.parentNode) {
+        element = element.parentNode;
+        const el = SugarElement.fromDom(element);
+        if (predicate(el)) {
+          return Optional.some(el);
+        } else if (stop(el)) {
+          break;
+        }
+      }
+      return Optional.none();
+    };
+    const closest$2 = (scope, predicate, isRoot) => {
+      const is = (s, test) => test(s);
+      return ClosestOrAncestor(is, ancestor$3, scope, predicate, isRoot);
+    };
+
+    const ancestor$2 = (scope, selector, isRoot) => ancestor$3(scope, e => is$1(e, selector), isRoot);
+    const closest$1 = (scope, selector, isRoot) => {
+      const is = (element, selector) => is$1(element, selector);
+      return ClosestOrAncestor(is, ancestor$2, scope, selector, isRoot);
+    };
+
+    const closest = target => closest$1(target, '[contenteditable]');
+    const isEditable = (element, assumeEditable = false) => {
+      if (inBody(element)) {
+        return element.dom.isContentEditable;
+      } else {
+        return closest(element).fold(constant(assumeEditable), editable => getRaw(editable) === 'true');
+      }
+    };
+    const getRaw = element => element.dom.contentEditable;
+
+    const before$1 = (marker, element) => {
+      const parent$1 = parent(marker);
+      parent$1.each(v => {
+        v.dom.insertBefore(element.dom, marker.dom);
+      });
+    };
+    const after = (marker, element) => {
+      const sibling = nextSibling(marker);
+      sibling.fold(() => {
+        const parent$1 = parent(marker);
+        parent$1.each(v => {
+          append$1(v, element);
+        });
+      }, v => {
+        before$1(v, element);
+      });
+    };
+    const prepend = (parent, element) => {
+      const firstChild$1 = firstChild(parent);
+      firstChild$1.fold(() => {
+        append$1(parent, element);
+      }, v => {
+        parent.dom.insertBefore(element.dom, v.dom);
+      });
+    };
+    const append$1 = (parent, element) => {
+      parent.dom.appendChild(element.dom);
+    };
+
+    const before = (marker, elements) => {
+      each$1(elements, x => {
+        before$1(marker, x);
+      });
+    };
+    const append = (parent, elements) => {
+      each$1(elements, x => {
+        append$1(parent, x);
+      });
+    };
+
+    const empty = element => {
+      element.dom.textContent = '';
+      each$1(children(element), rogue => {
+        remove(rogue);
+      });
+    };
+    const remove = element => {
+      const dom = element.dom;
+      if (dom.parentNode !== null) {
+        dom.parentNode.removeChild(dom);
+      }
+    };
+
+    var global$6 = tinymce.util.Tools.resolve('tinymce.dom.RangeUtils');
+
+    var global$5 = tinymce.util.Tools.resolve('tinymce.dom.TreeWalker');
+
+    var global$4 = tinymce.util.Tools.resolve('tinymce.util.VK');
+
+    const fromDom = nodes => map(nodes, SugarElement.fromDom);
+
+    const keys = Object.keys;
+    const each = (obj, f) => {
+      const props = keys(obj);
+      for (let k = 0, len = props.length; k < len; k++) {
+        const i = props[k];
+        const x = obj[i];
+        f(x, i);
+      }
+    };
+    const objAcc = r => (x, i) => {
+      r[i] = x;
+    };
+    const internalFilter = (obj, pred, onTrue, onFalse) => {
+      each(obj, (x, i) => {
+        (pred(x, i) ? onTrue : onFalse)(x, i);
+      });
+    };
+    const filter = (obj, pred) => {
+      const t = {};
+      internalFilter(obj, pred, objAcc(t), noop);
+      return t;
+    };
+
+    const rawSet = (dom, key, value) => {
+      if (isString(value) || isBoolean(value) || isNumber(value)) {
+        dom.setAttribute(key, value + '');
+      } else {
+        console.error('Invalid call to Attribute.set. Key ', key, ':: Value ', value, ':: Element ', dom);
+        throw new Error('Attribute value was not simple');
+      }
+    };
+    const setAll = (element, attrs) => {
+      const dom = element.dom;
+      each(attrs, (v, k) => {
+        rawSet(dom, k, v);
+      });
+    };
+    const clone$1 = element => foldl(element.dom.attributes, (acc, attr) => {
+      acc[attr.name] = attr.value;
+      return acc;
+    }, {});
+
+    const clone = (original, isDeep) => SugarElement.fromDom(original.dom.cloneNode(isDeep));
+    const deep = original => clone(original, true);
+    const shallowAs = (original, tag) => {
+      const nu = SugarElement.fromTag(tag);
+      const attributes = clone$1(original);
+      setAll(nu, attributes);
+      return nu;
+    };
+    const mutate = (original, tag) => {
+      const nu = shallowAs(original, tag);
+      after(original, nu);
+      const children$1 = children(original);
+      append(nu, children$1);
+      remove(original);
+      return nu;
+    };
+
+    var global$3 = tinymce.util.Tools.resolve('tinymce.dom.DOMUtils');
+
+    var global$2 = tinymce.util.Tools.resolve('tinymce.util.Tools');
+
+    const matchNodeName = name => node => isNonNullable(node) && node.nodeName.toLowerCase() === name;
+    const matchNodeNames = regex => node => isNonNullable(node) && regex.test(node.nodeName);
+    const isTextNode$1 = node => isNonNullable(node) && node.nodeType === 3;
+    const isElement = node => isNonNullable(node) && node.nodeType === 1;
+    const isListNode = matchNodeNames(/^(OL|UL|DL)$/);
+    const isOlUlNode = matchNodeNames(/^(OL|UL)$/);
+    const isOlNode = matchNodeName('ol');
+    const isListItemNode = matchNodeNames(/^(LI|DT|DD)$/);
+    const isDlItemNode = matchNodeNames(/^(DT|DD)$/);
+    const isTableCellNode = matchNodeNames(/^(TH|TD)$/);
+    const isBr = matchNodeName('br');
+    const isFirstChild = node => {
+      var _a;
+      return ((_a = node.parentNode) === null || _a === void 0 ? void 0 : _a.firstChild) === node;
+    };
+    const isTextBlock = (editor, node) => isNonNullable(node) && node.nodeName in editor.schema.getTextBlockElements();
+    const isBlock = (node, blockElements) => isNonNullable(node) && node.nodeName in blockElements;
+    const isVoid = (editor, node) => isNonNullable(node) && node.nodeName in editor.schema.getVoidElements();
+    const isBogusBr = (dom, node) => {
       if (!isBr(node)) {
         return false;
       }
-
-      if (dom.isBlock(node.nextSibling) && !isBr(node.previousSibling)) {
-        return true;
-      }
-
-      return false;
+      return dom.isBlock(node.nextSibling) && !isBr(node.previousSibling);
     };
-
-    var isEmpty = function (dom, elm, keepBookmarks) {
-      var empty = dom.isEmpty(elm);
-
+    const isEmpty$2 = (dom, elm, keepBookmarks) => {
+      const empty = dom.isEmpty(elm);
       if (keepBookmarks && dom.select('span[data-mce-type=bookmark]', elm).length > 0) {
         return false;
       }
-
       return empty;
     };
+    const isChildOfBody = (dom, elm) => dom.isChildOf(elm, dom.getRoot());
 
-    var isChildOfBody = function (dom, elm) {
-      return dom.isChildOf(elm, dom.getRoot());
+    const option = name => editor => editor.options.get(name);
+    const register$3 = editor => {
+      const registerOption = editor.options.register;
+      registerOption('lists_indent_on_tab', {
+        processor: 'boolean',
+        default: true
+      });
     };
+    const shouldIndentOnTab = option('lists_indent_on_tab');
+    const getForcedRootBlock = option('forced_root_block');
+    const getForcedRootBlockAttrs = option('forced_root_block_attrs');
 
-    return {
-      isTextNode: isTextNode,
-      isListNode: isListNode,
-      isListItemNode: isListItemNode,
-      isBr: isBr,
-      isFirstChild: isFirstChild,
-      isLastChild: isLastChild,
-      isTextBlock: isTextBlock,
-      isBogusBr: isBogusBr,
-      isEmpty: isEmpty,
-      isChildOfBody: isChildOfBody
-    };
-  }
-);
-
-
-/**
- * ResolveGlobal.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.core.dom.RangeUtils',
-  [
-    'global!tinymce.util.Tools.resolve'
-  ],
-  function (resolve) {
-    return resolve('tinymce.dom.RangeUtils');
-  }
-);
-
-/**
- * Range.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.plugins.lists.core.Range',
-  [
-    'tinymce.core.dom.RangeUtils',
-    'tinymce.plugins.lists.core.NodeType'
-  ],
-  function (RangeUtils, NodeType) {
-    var getNormalizedEndPoint = function (container, offset) {
-      var node = RangeUtils.getNode(container, offset);
-
-      if (NodeType.isListItemNode(container) && NodeType.isTextNode(node)) {
-        var textNodeOffset = offset >= container.childNodes.length ? node.data.length : 0;
-        return { container: node, offset: textNodeOffset };
+    const createTextBlock = (editor, contentNode, attrs = {}) => {
+      const dom = editor.dom;
+      const blockElements = editor.schema.getBlockElements();
+      const fragment = dom.createFragment();
+      const blockName = getForcedRootBlock(editor);
+      const blockAttrs = getForcedRootBlockAttrs(editor);
+      let node;
+      let textBlock;
+      let hasContentNode = false;
+      textBlock = dom.create(blockName, {
+        ...blockAttrs,
+        ...attrs.style ? { style: attrs.style } : {}
+      });
+      if (!isBlock(contentNode.firstChild, blockElements)) {
+        fragment.appendChild(textBlock);
       }
-
-      return { container: container, offset: offset };
+      while (node = contentNode.firstChild) {
+        const nodeName = node.nodeName;
+        if (!hasContentNode && (nodeName !== 'SPAN' || node.getAttribute('data-mce-type') !== 'bookmark')) {
+          hasContentNode = true;
+        }
+        if (isBlock(node, blockElements)) {
+          fragment.appendChild(node);
+          textBlock = null;
+        } else {
+          if (!textBlock) {
+            textBlock = dom.create(blockName, blockAttrs);
+            fragment.appendChild(textBlock);
+          }
+          textBlock.appendChild(node);
+        }
+      }
+      if (!hasContentNode && textBlock) {
+        textBlock.appendChild(dom.create('br', { 'data-mce-bogus': '1' }));
+      }
+      return fragment;
     };
 
-    var normalizeRange = function (rng) {
-      var outRng = rng.cloneRange();
+    const DOM$2 = global$3.DOM;
+    const splitList = (editor, list, li) => {
+      const removeAndKeepBookmarks = targetNode => {
+        const parent = targetNode.parentNode;
+        if (parent) {
+          global$2.each(bookmarks, node => {
+            parent.insertBefore(node, li.parentNode);
+          });
+        }
+        DOM$2.remove(targetNode);
+      };
+      const bookmarks = DOM$2.select('span[data-mce-type="bookmark"]', list);
+      const newBlock = createTextBlock(editor, li);
+      const tmpRng = DOM$2.createRng();
+      tmpRng.setStartAfter(li);
+      tmpRng.setEndAfter(list);
+      const fragment = tmpRng.extractContents();
+      for (let node = fragment.firstChild; node; node = node.firstChild) {
+        if (node.nodeName === 'LI' && editor.dom.isEmpty(node)) {
+          DOM$2.remove(node);
+          break;
+        }
+      }
+      if (!editor.dom.isEmpty(fragment)) {
+        DOM$2.insertAfter(fragment, list);
+      }
+      DOM$2.insertAfter(newBlock, list);
+      const parent = li.parentElement;
+      if (parent && isEmpty$2(editor.dom, parent)) {
+        removeAndKeepBookmarks(parent);
+      }
+      DOM$2.remove(li);
+      if (isEmpty$2(editor.dom, list)) {
+        DOM$2.remove(list);
+      }
+    };
 
-      var rangeStart = getNormalizedEndPoint(rng.startContainer, rng.startOffset);
+    const isDescriptionDetail = isTag('dd');
+    const isDescriptionTerm = isTag('dt');
+    const outdentDlItem = (editor, item) => {
+      if (isDescriptionDetail(item)) {
+        mutate(item, 'dt');
+      } else if (isDescriptionTerm(item)) {
+        parentElement(item).each(dl => splitList(editor, dl.dom, item.dom));
+      }
+    };
+    const indentDlItem = item => {
+      if (isDescriptionTerm(item)) {
+        mutate(item, 'dd');
+      }
+    };
+    const dlIndentation = (editor, indentation, dlItems) => {
+      if (indentation === 'Indent') {
+        each$1(dlItems, indentDlItem);
+      } else {
+        each$1(dlItems, item => outdentDlItem(editor, item));
+      }
+    };
+
+    const getNormalizedPoint = (container, offset) => {
+      if (isTextNode$1(container)) {
+        return {
+          container,
+          offset
+        };
+      }
+      const node = global$6.getNode(container, offset);
+      if (isTextNode$1(node)) {
+        return {
+          container: node,
+          offset: offset >= container.childNodes.length ? node.data.length : 0
+        };
+      } else if (node.previousSibling && isTextNode$1(node.previousSibling)) {
+        return {
+          container: node.previousSibling,
+          offset: node.previousSibling.data.length
+        };
+      } else if (node.nextSibling && isTextNode$1(node.nextSibling)) {
+        return {
+          container: node.nextSibling,
+          offset: 0
+        };
+      }
+      return {
+        container,
+        offset
+      };
+    };
+    const normalizeRange = rng => {
+      const outRng = rng.cloneRange();
+      const rangeStart = getNormalizedPoint(rng.startContainer, rng.startOffset);
       outRng.setStart(rangeStart.container, rangeStart.offset);
-
-      var rangeEnd = getNormalizedEndPoint(rng.endContainer, rng.endOffset);
+      const rangeEnd = getNormalizedPoint(rng.endContainer, rng.endOffset);
       outRng.setEnd(rangeEnd.container, rangeEnd.offset);
-
       return outRng;
     };
 
-    return {
-      getNormalizedEndPoint: getNormalizedEndPoint,
-      normalizeRange: normalizeRange
+    const listNames = [
+      'OL',
+      'UL',
+      'DL'
+    ];
+    const listSelector = listNames.join(',');
+    const getParentList = (editor, node) => {
+      const selectionStart = node || editor.selection.getStart(true);
+      return editor.dom.getParent(selectionStart, listSelector, getClosestListHost(editor, selectionStart));
     };
-  }
-);
+    const isParentListSelected = (parentList, selectedBlocks) => isNonNullable(parentList) && selectedBlocks.length === 1 && selectedBlocks[0] === parentList;
+    const findSubLists = parentList => filter$1(parentList.querySelectorAll(listSelector), isListNode);
+    const getSelectedSubLists = editor => {
+      const parentList = getParentList(editor);
+      const selectedBlocks = editor.selection.getSelectedBlocks();
+      if (isParentListSelected(parentList, selectedBlocks)) {
+        return findSubLists(parentList);
+      } else {
+        return filter$1(selectedBlocks, elm => {
+          return isListNode(elm) && parentList !== elm;
+        });
+      }
+    };
+    const findParentListItemsNodes = (editor, elms) => {
+      const listItemsElms = global$2.map(elms, elm => {
+        const parentLi = editor.dom.getParent(elm, 'li,dd,dt', getClosestListHost(editor, elm));
+        return parentLi ? parentLi : elm;
+      });
+      return unique(listItemsElms);
+    };
+    const getSelectedListItems = editor => {
+      const selectedBlocks = editor.selection.getSelectedBlocks();
+      return filter$1(findParentListItemsNodes(editor, selectedBlocks), isListItemNode);
+    };
+    const getSelectedDlItems = editor => filter$1(getSelectedListItems(editor), isDlItemNode);
+    const getClosestEditingHost = (editor, elm) => {
+      const parentTableCell = editor.dom.getParents(elm, 'TD,TH');
+      return parentTableCell.length > 0 ? parentTableCell[0] : editor.getBody();
+    };
+    const isListHost = (schema, node) => !isListNode(node) && !isListItemNode(node) && exists(listNames, listName => schema.isValidChild(node.nodeName, listName));
+    const getClosestListHost = (editor, elm) => {
+      const parentBlocks = editor.dom.getParents(elm, editor.dom.isBlock);
+      const isNotForcedRootBlock = elm => elm.nodeName.toLowerCase() !== getForcedRootBlock(editor);
+      const parentBlock = find(parentBlocks, elm => isNotForcedRootBlock(elm) && isListHost(editor.schema, elm));
+      return parentBlock.getOr(editor.getBody());
+    };
+    const isListInsideAnLiWithFirstAndLastNotListElement = list => parent(list).exists(parent => isListItemNode(parent.dom) && firstChild(parent).exists(firstChild => !isListNode(firstChild.dom)) && lastChild(parent).exists(lastChild => !isListNode(lastChild.dom)));
+    const findLastParentListNode = (editor, elm) => {
+      const parentLists = editor.dom.getParents(elm, 'ol,ul', getClosestListHost(editor, elm));
+      return last(parentLists);
+    };
+    const getSelectedLists = editor => {
+      const firstList = findLastParentListNode(editor, editor.selection.getStart());
+      const subsequentLists = filter$1(editor.selection.getSelectedBlocks(), isOlUlNode);
+      return firstList.toArray().concat(subsequentLists);
+    };
+    const getParentLists = editor => {
+      const elm = editor.selection.getStart();
+      return editor.dom.getParents(elm, 'ol,ul', getClosestListHost(editor, elm));
+    };
+    const getSelectedListRoots = editor => {
+      const selectedLists = getSelectedLists(editor);
+      const parentLists = getParentLists(editor);
+      return find(parentLists, p => isListInsideAnLiWithFirstAndLastNotListElement(SugarElement.fromDom(p))).fold(() => getUniqueListRoots(editor, selectedLists), l => [l]);
+    };
+    const getUniqueListRoots = (editor, lists) => {
+      const listRoots = map(lists, list => findLastParentListNode(editor, list).getOr(list));
+      return unique(listRoots);
+    };
 
+    const isCustomList = list => /\btox\-/.test(list.className);
+    const inList = (parents, listName) => findUntil(parents, isListNode, isTableCellNode).exists(list => list.nodeName === listName && !isCustomList(list));
+    const isWithinNonEditable = (editor, element) => element !== null && !editor.dom.isEditable(element);
+    const selectionIsWithinNonEditableList = editor => {
+      const parentList = getParentList(editor);
+      return isWithinNonEditable(editor, parentList);
+    };
+    const isWithinNonEditableList = (editor, element) => {
+      const parentList = editor.dom.getParent(element, 'ol,ul,dl');
+      return isWithinNonEditable(editor, parentList);
+    };
+    const setNodeChangeHandler = (editor, nodeChangeHandler) => {
+      const initialNode = editor.selection.getNode();
+      nodeChangeHandler({
+        parents: editor.dom.getParents(initialNode),
+        element: initialNode
+      });
+      editor.on('NodeChange', nodeChangeHandler);
+      return () => editor.off('NodeChange', nodeChangeHandler);
+    };
 
-/**
- * Bookmark.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
+    const fromElements = (elements, scope) => {
+      const doc = scope || document;
+      const fragment = doc.createDocumentFragment();
+      each$1(elements, element => {
+        fragment.appendChild(element.dom);
+      });
+      return SugarElement.fromDom(fragment);
+    };
 
-define(
-  'tinymce.plugins.lists.core.Bookmark',
-  [
-    'tinymce.core.dom.DOMUtils',
-    'tinymce.plugins.lists.core.NodeType',
-    'tinymce.plugins.lists.core.Range'
-  ],
-  function (DOMUtils, NodeType, Range) {
-    var DOM = DOMUtils.DOM;
+    const fireListEvent = (editor, action, element) => editor.dispatch('ListMutation', {
+      action,
+      element
+    });
 
-    /**
-     * Returns a range bookmark. This will convert indexed bookmarks into temporary span elements with
-     * index 0 so that they can be restored properly after the DOM has been modified. Text bookmarks will not have spans
-     * added to them since they can be restored after a dom operation.
-     *
-     * So this: <p><b>|</b><b>|</b></p>
-     * becomes: <p><b><span data-mce-type="bookmark">|</span></b><b data-mce-type="bookmark">|</span></b></p>
-     *
-     * @param  {DOMRange} rng DOM Range to get bookmark on.
-     * @return {Object} Bookmark object.
-     */
-    var createBookmark = function (rng) {
-      var bookmark = {};
+    const blank = r => s => s.replace(r, '');
+    const trim = blank(/^\s+|\s+$/g);
+    const isNotEmpty = s => s.length > 0;
+    const isEmpty$1 = s => !isNotEmpty(s);
 
-      var setupEndPoint = function (start) {
-        var offsetNode, container, offset;
+    const isSupported = dom => dom.style !== undefined && isFunction(dom.style.getPropertyValue);
 
-        container = rng[start ? 'startContainer' : 'endContainer'];
-        offset = rng[start ? 'startOffset' : 'endOffset'];
+    const internalSet = (dom, property, value) => {
+      if (!isString(value)) {
+        console.error('Invalid call to CSS.set. Property ', property, ':: Value ', value, ':: Element ', dom);
+        throw new Error('CSS value must be a string: ' + value);
+      }
+      if (isSupported(dom)) {
+        dom.style.setProperty(property, value);
+      }
+    };
+    const set = (element, property, value) => {
+      const dom = element.dom;
+      internalSet(dom, property, value);
+    };
 
-        if (container.nodeType === 1) {
-          offsetNode = DOM.create('span', { 'data-mce-type': 'bookmark' });
+    const isList = el => is(el, 'OL,UL');
+    const isListItem = el => is(el, 'LI');
+    const hasFirstChildList = el => firstChild(el).exists(isList);
+    const hasLastChildList = el => lastChild(el).exists(isList);
 
+    const isEntryList = entry => 'listAttributes' in entry;
+    const isEntryComment = entry => 'isComment' in entry;
+    const isEntryFragment = entry => 'isFragment' in entry;
+    const isIndented = entry => entry.depth > 0;
+    const isSelected = entry => entry.isSelected;
+    const cloneItemContent = li => {
+      const children$1 = children(li);
+      const content = hasLastChildList(li) ? children$1.slice(0, -1) : children$1;
+      return map(content, deep);
+    };
+    const createEntry = (li, depth, isSelected) => parent(li).filter(isElement$1).map(list => ({
+      depth,
+      dirty: false,
+      isSelected,
+      content: cloneItemContent(li),
+      itemAttributes: clone$1(li),
+      listAttributes: clone$1(list),
+      listType: name(list),
+      isInPreviousLi: false
+    }));
+
+    const joinSegment = (parent, child) => {
+      append$1(parent.item, child.list);
+    };
+    const joinSegments = segments => {
+      for (let i = 1; i < segments.length; i++) {
+        joinSegment(segments[i - 1], segments[i]);
+      }
+    };
+    const appendSegments = (head$1, tail) => {
+      lift2(last(head$1), head(tail), joinSegment);
+    };
+    const createSegment = (scope, listType) => {
+      const segment = {
+        list: SugarElement.fromTag(listType, scope),
+        item: SugarElement.fromTag('li', scope)
+      };
+      append$1(segment.list, segment.item);
+      return segment;
+    };
+    const createSegments = (scope, entry, size) => {
+      const segments = [];
+      for (let i = 0; i < size; i++) {
+        segments.push(createSegment(scope, isEntryList(entry) ? entry.listType : entry.parentListType));
+      }
+      return segments;
+    };
+    const populateSegments = (segments, entry) => {
+      for (let i = 0; i < segments.length - 1; i++) {
+        set(segments[i].item, 'list-style-type', 'none');
+      }
+      last(segments).each(segment => {
+        if (isEntryList(entry)) {
+          setAll(segment.list, entry.listAttributes);
+          setAll(segment.item, entry.itemAttributes);
+        }
+        append(segment.item, entry.content);
+      });
+    };
+    const normalizeSegment = (segment, entry) => {
+      if (name(segment.list) !== entry.listType) {
+        segment.list = mutate(segment.list, entry.listType);
+      }
+      setAll(segment.list, entry.listAttributes);
+    };
+    const createItem = (scope, attr, content) => {
+      const item = SugarElement.fromTag('li', scope);
+      setAll(item, attr);
+      append(item, content);
+      return item;
+    };
+    const appendItem = (segment, item) => {
+      append$1(segment.list, item);
+      segment.item = item;
+    };
+    const writeShallow = (scope, cast, entry) => {
+      const newCast = cast.slice(0, entry.depth);
+      last(newCast).each(segment => {
+        if (isEntryList(entry)) {
+          const item = createItem(scope, entry.itemAttributes, entry.content);
+          appendItem(segment, item);
+          normalizeSegment(segment, entry);
+        } else if (isEntryFragment(entry)) {
+          append(segment.item, entry.content);
+        } else {
+          const item = SugarElement.fromHtml(`<!--${ entry.content }-->`);
+          append$1(segment.list, item);
+        }
+      });
+      return newCast;
+    };
+    const writeDeep = (scope, cast, entry) => {
+      const segments = createSegments(scope, entry, entry.depth - cast.length);
+      joinSegments(segments);
+      populateSegments(segments, entry);
+      appendSegments(cast, segments);
+      return cast.concat(segments);
+    };
+    const composeList = (scope, entries) => {
+      let firstCommentEntryOpt = Optional.none();
+      const cast = foldl(entries, (cast, entry, i) => {
+        if (!isEntryComment(entry)) {
+          return entry.depth > cast.length ? writeDeep(scope, cast, entry) : writeShallow(scope, cast, entry);
+        } else {
+          if (i === 0) {
+            firstCommentEntryOpt = Optional.some(entry);
+            return cast;
+          }
+          return writeShallow(scope, cast, entry);
+        }
+      }, []);
+      firstCommentEntryOpt.each(firstCommentEntry => {
+        const item = SugarElement.fromHtml(`<!--${ firstCommentEntry.content }-->`);
+        head(cast).each(fistCast => {
+          prepend(fistCast.list, item);
+        });
+      });
+      return head(cast).map(segment => segment.list);
+    };
+
+    const indentEntry = (indentation, entry) => {
+      switch (indentation) {
+      case 'Indent':
+        entry.depth++;
+        break;
+      case 'Outdent':
+        entry.depth--;
+        break;
+      case 'Flatten':
+        entry.depth = 0;
+      }
+      entry.dirty = true;
+    };
+
+    const cloneListProperties = (target, source) => {
+      if (isEntryList(target) && isEntryList(source)) {
+        target.listType = source.listType;
+        target.listAttributes = { ...source.listAttributes };
+      }
+    };
+    const cleanListProperties = entry => {
+      entry.listAttributes = filter(entry.listAttributes, (_value, key) => key !== 'start');
+    };
+    const closestSiblingEntry = (entries, start) => {
+      const depth = entries[start].depth;
+      const matches = entry => entry.depth === depth && !entry.dirty;
+      const until = entry => entry.depth < depth;
+      return findUntil(reverse(entries.slice(0, start)), matches, until).orThunk(() => findUntil(entries.slice(start + 1), matches, until));
+    };
+    const normalizeEntries = entries => {
+      each$1(entries, (entry, i) => {
+        closestSiblingEntry(entries, i).fold(() => {
+          if (entry.dirty && isEntryList(entry)) {
+            cleanListProperties(entry);
+          }
+        }, matchingEntry => cloneListProperties(entry, matchingEntry));
+      });
+      return entries;
+    };
+
+    const Cell = initial => {
+      let value = initial;
+      const get = () => {
+        return value;
+      };
+      const set = v => {
+        value = v;
+      };
+      return {
+        get,
+        set
+      };
+    };
+
+    const parseSingleItem = (depth, itemSelection, selectionState, item) => {
+      var _a;
+      if (isComment(item)) {
+        return [{
+            depth: depth + 1,
+            content: (_a = item.dom.nodeValue) !== null && _a !== void 0 ? _a : '',
+            dirty: false,
+            isSelected: false,
+            isComment: true
+          }];
+      }
+      itemSelection.each(selection => {
+        if (eq(selection.start, item)) {
+          selectionState.set(true);
+        }
+      });
+      const currentItemEntry = createEntry(item, depth, selectionState.get());
+      itemSelection.each(selection => {
+        if (eq(selection.end, item)) {
+          selectionState.set(false);
+        }
+      });
+      const childListEntries = lastChild(item).filter(isList).map(list => parseList(depth, itemSelection, selectionState, list)).getOr([]);
+      return currentItemEntry.toArray().concat(childListEntries);
+    };
+    const parseItem = (depth, itemSelection, selectionState, item) => firstChild(item).filter(isList).fold(() => parseSingleItem(depth, itemSelection, selectionState, item), list => {
+      const parsedSiblings = foldl(children(item), (acc, liChild, i) => {
+        if (i === 0) {
+          return acc;
+        } else {
+          if (isListItem(liChild)) {
+            return acc.concat(parseSingleItem(depth, itemSelection, selectionState, liChild));
+          } else {
+            const fragment = {
+              isFragment: true,
+              depth,
+              content: [liChild],
+              isSelected: false,
+              dirty: false,
+              parentListType: name(list)
+            };
+            return acc.concat(fragment);
+          }
+        }
+      }, []);
+      return parseList(depth, itemSelection, selectionState, list).concat(parsedSiblings);
+    });
+    const parseList = (depth, itemSelection, selectionState, list) => bind(children(list), element => {
+      const parser = isList(element) ? parseList : parseItem;
+      const newDepth = depth + 1;
+      return parser(newDepth, itemSelection, selectionState, element);
+    });
+    const parseLists = (lists, itemSelection) => {
+      const selectionState = Cell(false);
+      const initialDepth = 0;
+      return map(lists, list => ({
+        sourceList: list,
+        entries: parseList(initialDepth, itemSelection, selectionState, list)
+      }));
+    };
+
+    const outdentedComposer = (editor, entries) => {
+      const normalizedEntries = normalizeEntries(entries);
+      return map(normalizedEntries, entry => {
+        const content = !isEntryComment(entry) ? fromElements(entry.content) : fromElements([SugarElement.fromHtml(`<!--${ entry.content }-->`)]);
+        const listItemAttrs = isEntryList(entry) ? entry.itemAttributes : {};
+        return SugarElement.fromDom(createTextBlock(editor, content.dom, listItemAttrs));
+      });
+    };
+    const indentedComposer = (editor, entries) => {
+      const normalizedEntries = normalizeEntries(entries);
+      return composeList(editor.contentDocument, normalizedEntries).toArray();
+    };
+    const composeEntries = (editor, entries) => bind(groupBy(entries, isIndented), entries => {
+      const groupIsIndented = head(entries).exists(isIndented);
+      return groupIsIndented ? indentedComposer(editor, entries) : outdentedComposer(editor, entries);
+    });
+    const indentSelectedEntries = (entries, indentation) => {
+      each$1(filter$1(entries, isSelected), entry => indentEntry(indentation, entry));
+    };
+    const getItemSelection = editor => {
+      const selectedListItems = map(getSelectedListItems(editor), SugarElement.fromDom);
+      return lift2(find(selectedListItems, not(hasFirstChildList)), find(reverse(selectedListItems), not(hasFirstChildList)), (start, end) => ({
+        start,
+        end
+      }));
+    };
+    const listIndentation = (editor, lists, indentation) => {
+      const entrySets = parseLists(lists, getItemSelection(editor));
+      each$1(entrySets, entrySet => {
+        indentSelectedEntries(entrySet.entries, indentation);
+        const composedLists = composeEntries(editor, entrySet.entries);
+        each$1(composedLists, composedList => {
+          fireListEvent(editor, indentation === 'Indent' ? 'IndentList' : 'OutdentList', composedList.dom);
+        });
+        before(entrySet.sourceList, composedLists);
+        remove(entrySet.sourceList);
+      });
+    };
+
+    const selectionIndentation = (editor, indentation) => {
+      const lists = fromDom(getSelectedListRoots(editor));
+      const dlItems = fromDom(getSelectedDlItems(editor));
+      let isHandled = false;
+      if (lists.length || dlItems.length) {
+        const bookmark = editor.selection.getBookmark();
+        listIndentation(editor, lists, indentation);
+        dlIndentation(editor, indentation, dlItems);
+        editor.selection.moveToBookmark(bookmark);
+        editor.selection.setRng(normalizeRange(editor.selection.getRng()));
+        editor.nodeChanged();
+        isHandled = true;
+      }
+      return isHandled;
+    };
+    const handleIndentation = (editor, indentation) => !selectionIsWithinNonEditableList(editor) && selectionIndentation(editor, indentation);
+    const indentListSelection = editor => handleIndentation(editor, 'Indent');
+    const outdentListSelection = editor => handleIndentation(editor, 'Outdent');
+    const flattenListSelection = editor => handleIndentation(editor, 'Flatten');
+
+    const zeroWidth = '\uFEFF';
+    const isZwsp = char => char === zeroWidth;
+
+    const ancestor$1 = (scope, predicate, isRoot) => ancestor$3(scope, predicate, isRoot).isSome();
+
+    const ancestor = (element, target) => ancestor$1(element, curry(eq, target));
+
+    var global$1 = tinymce.util.Tools.resolve('tinymce.dom.BookmarkManager');
+
+    const DOM$1 = global$3.DOM;
+    const createBookmark = rng => {
+      const bookmark = {};
+      const setupEndPoint = start => {
+        let container = rng[start ? 'startContainer' : 'endContainer'];
+        let offset = rng[start ? 'startOffset' : 'endOffset'];
+        if (isElement(container)) {
+          const offsetNode = DOM$1.create('span', { 'data-mce-type': 'bookmark' });
           if (container.hasChildNodes()) {
             offset = Math.min(offset, container.childNodes.length - 1);
-
             if (start) {
               container.insertBefore(offsetNode, container.childNodes[offset]);
             } else {
-              DOM.insertAfter(offsetNode, container.childNodes[offset]);
+              DOM$1.insertAfter(offsetNode, container.childNodes[offset]);
             }
           } else {
             container.appendChild(offsetNode);
           }
-
           container = offsetNode;
           offset = 0;
         }
-
         bookmark[start ? 'startContainer' : 'endContainer'] = container;
         bookmark[start ? 'startOffset' : 'endOffset'] = offset;
       };
-
       setupEndPoint(true);
-
       if (!rng.collapsed) {
         setupEndPoint();
       }
-
       return bookmark;
     };
-
-    var resolveBookmark = function (bookmark) {
-      function restoreEndPoint(start) {
-        var container, offset, node;
-
-        var nodeIndex = function (container) {
-          var node = container.parentNode.firstChild, idx = 0;
-
+    const resolveBookmark = bookmark => {
+      const restoreEndPoint = start => {
+        const nodeIndex = container => {
+          var _a;
+          let node = (_a = container.parentNode) === null || _a === void 0 ? void 0 : _a.firstChild;
+          let idx = 0;
           while (node) {
             if (node === container) {
               return idx;
             }
-
-            // Skip data-mce-type=bookmark nodes
-            if (node.nodeType !== 1 || node.getAttribute('data-mce-type') !== 'bookmark') {
+            if (!isElement(node) || node.getAttribute('data-mce-type') !== 'bookmark') {
               idx++;
             }
-
             node = node.nextSibling;
           }
-
           return -1;
         };
-
-        container = node = bookmark[start ? 'startContainer' : 'endContainer'];
-        offset = bookmark[start ? 'startOffset' : 'endOffset'];
-
+        let container = bookmark[start ? 'startContainer' : 'endContainer'];
+        let offset = bookmark[start ? 'startOffset' : 'endOffset'];
         if (!container) {
           return;
         }
-
-        if (container.nodeType === 1) {
+        if (isElement(container) && container.parentNode) {
+          const node = container;
           offset = nodeIndex(container);
           container = container.parentNode;
-          DOM.remove(node);
+          DOM$1.remove(node);
+          if (!container.hasChildNodes() && DOM$1.isBlock(container)) {
+            container.appendChild(DOM$1.create('br'));
+          }
         }
-
         bookmark[start ? 'startContainer' : 'endContainer'] = container;
         bookmark[start ? 'startOffset' : 'endOffset'] = offset;
-      }
-
+      };
       restoreEndPoint(true);
       restoreEndPoint();
-
-      var rng = DOM.createRng();
-
+      const rng = DOM$1.createRng();
       rng.setStart(bookmark.startContainer, bookmark.startOffset);
-
       if (bookmark.endContainer) {
         rng.setEnd(bookmark.endContainer, bookmark.endOffset);
       }
-
-      return Range.normalizeRange(rng);
+      return normalizeRange(rng);
     };
 
-    return {
-      createBookmark: createBookmark,
-      resolveBookmark: resolveBookmark
+    const listToggleActionFromListName = listName => {
+      switch (listName) {
+      case 'UL':
+        return 'ToggleUlList';
+      case 'OL':
+        return 'ToggleOlList';
+      case 'DL':
+        return 'ToggleDLList';
+      }
     };
-  }
-);
 
-
-/**
- * Selection.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.plugins.lists.core.Selection',
-  [
-    'tinymce.core.util.Tools',
-    'tinymce.plugins.lists.core.NodeType'
-  ],
-  function (Tools, NodeType) {
-    var getSelectedListItems = function (editor) {
-      return Tools.grep(editor.selection.getSelectedBlocks(), function (block) {
-        return NodeType.isListItemNode(block);
+    const updateListStyle = (dom, el, detail) => {
+      const type = detail['list-style-type'] ? detail['list-style-type'] : null;
+      dom.setStyle(el, 'list-style-type', type);
+    };
+    const setAttribs = (elm, attrs) => {
+      global$2.each(attrs, (value, key) => {
+        elm.setAttribute(key, value);
       });
     };
-
-    return {
-      getSelectedListItems: getSelectedListItems
+    const updateListAttrs = (dom, el, detail) => {
+      setAttribs(el, detail['list-attributes']);
+      global$2.each(dom.select('li', el), li => {
+        setAttribs(li, detail['list-item-attributes']);
+      });
     };
-  }
-);
-
-
-/**
- * Indent.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.plugins.lists.actions.Indent',
-  [
-    'tinymce.core.dom.DOMUtils',
-    'tinymce.plugins.lists.core.Bookmark',
-    'tinymce.plugins.lists.core.NodeType',
-    'tinymce.plugins.lists.core.Selection'
-  ],
-  function (DOMUtils, Bookmark, NodeType, Selection) {
-    var DOM = DOMUtils.DOM;
-
-    var mergeLists = function (from, to) {
-      var node;
-
-      if (NodeType.isListNode(from)) {
-        while ((node = from.firstChild)) {
-          to.appendChild(node);
+    const updateListWithDetails = (dom, el, detail) => {
+      updateListStyle(dom, el, detail);
+      updateListAttrs(dom, el, detail);
+    };
+    const removeStyles = (dom, element, styles) => {
+      global$2.each(styles, style => dom.setStyle(element, style, ''));
+    };
+    const isInline = (editor, node) => isNonNullable(node) && !isBlock(node, editor.schema.getBlockElements());
+    const getEndPointNode = (editor, rng, start, root) => {
+      let container = rng[start ? 'startContainer' : 'endContainer'];
+      const offset = rng[start ? 'startOffset' : 'endOffset'];
+      if (isElement(container)) {
+        container = container.childNodes[Math.min(offset, container.childNodes.length - 1)] || container;
+      }
+      if (!start && isBr(container.nextSibling)) {
+        container = container.nextSibling;
+      }
+      const findBlockAncestor = node => {
+        while (!editor.dom.isBlock(node) && node.parentNode && root !== node) {
+          node = node.parentNode;
         }
-
-        DOM.remove(from);
-      }
-    };
-
-    var indent = function (li) {
-      var sibling, newList, listStyle;
-
-      if (li.nodeName === 'DT') {
-        DOM.rename(li, 'DD');
-        return true;
-      }
-
-      sibling = li.previousSibling;
-
-      if (sibling && NodeType.isListNode(sibling)) {
-        sibling.appendChild(li);
-        return true;
-      }
-
-      if (sibling && sibling.nodeName === 'LI' && NodeType.isListNode(sibling.lastChild)) {
-        sibling.lastChild.appendChild(li);
-        mergeLists(li.lastChild, sibling.lastChild);
-        return true;
-      }
-
-      sibling = li.nextSibling;
-
-      if (sibling && NodeType.isListNode(sibling)) {
-        sibling.insertBefore(li, sibling.firstChild);
-        return true;
-      }
-
-      /*if (sibling && sibling.nodeName === 'LI' && isListNode(li.lastChild)) {
-        return false;
-      }*/
-
-      sibling = li.previousSibling;
-      if (sibling && sibling.nodeName === 'LI') {
-        newList = DOM.create(li.parentNode.nodeName);
-        listStyle = DOM.getStyle(li.parentNode, 'listStyleType');
-        if (listStyle) {
-          DOM.setStyle(newList, 'listStyleType', listStyle);
-        }
-        sibling.appendChild(newList);
-        newList.appendChild(li);
-        mergeLists(li.lastChild, newList);
-        return true;
-      }
-
-      return false;
-    };
-
-    var indentSelection = function (editor) {
-      var listElements = Selection.getSelectedListItems(editor);
-
-      if (listElements.length) {
-        var bookmark = Bookmark.createBookmark(editor.selection.getRng(true));
-
-        for (var i = 0; i < listElements.length; i++) {
-          if (!indent(listElements[i]) && i === 0) {
-            break;
+        return node;
+      };
+      const findBetterContainer = (container, forward) => {
+        var _a;
+        const walker = new global$5(container, findBlockAncestor(container));
+        const dir = forward ? 'next' : 'prev';
+        let node;
+        while (node = walker[dir]()) {
+          if (!(isVoid(editor, node) || isZwsp(node.textContent) || ((_a = node.textContent) === null || _a === void 0 ? void 0 : _a.length) === 0)) {
+            return Optional.some(node);
           }
         }
-
-        editor.selection.setRng(Bookmark.resolveBookmark(bookmark));
-        editor.nodeChanged();
-
-        return true;
+        return Optional.none();
+      };
+      if (start && isTextNode$1(container)) {
+        if (isZwsp(container.textContent)) {
+          container = findBetterContainer(container, false).getOr(container);
+        } else {
+          if (container.parentNode !== null && isInline(editor, container.parentNode)) {
+            container = container.parentNode;
+          }
+          while (container.previousSibling !== null && (isInline(editor, container.previousSibling) || isTextNode$1(container.previousSibling))) {
+            container = container.previousSibling;
+          }
+        }
+      }
+      if (!start && isTextNode$1(container)) {
+        if (isZwsp(container.textContent)) {
+          container = findBetterContainer(container, true).getOr(container);
+        } else {
+          if (container.parentNode !== null && isInline(editor, container.parentNode)) {
+            container = container.parentNode;
+          }
+          while (container.nextSibling !== null && (isInline(editor, container.nextSibling) || isTextNode$1(container.nextSibling))) {
+            container = container.nextSibling;
+          }
+        }
+      }
+      while (container.parentNode !== root) {
+        const parent = container.parentNode;
+        if (isTextBlock(editor, container)) {
+          return container;
+        }
+        if (/^(TD|TH)$/.test(parent.nodeName)) {
+          return container;
+        }
+        container = parent;
+      }
+      return container;
+    };
+    const getSelectedTextBlocks = (editor, rng, root) => {
+      const textBlocks = [];
+      const dom = editor.dom;
+      const startNode = getEndPointNode(editor, rng, true, root);
+      const endNode = getEndPointNode(editor, rng, false, root);
+      let block;
+      const siblings = [];
+      for (let node = startNode; node; node = node.nextSibling) {
+        siblings.push(node);
+        if (node === endNode) {
+          break;
+        }
+      }
+      global$2.each(siblings, node => {
+        var _a;
+        if (isTextBlock(editor, node)) {
+          textBlocks.push(node);
+          block = null;
+          return;
+        }
+        if (dom.isBlock(node) || isBr(node)) {
+          if (isBr(node)) {
+            dom.remove(node);
+          }
+          block = null;
+          return;
+        }
+        const nextSibling = node.nextSibling;
+        if (global$1.isBookmarkNode(node)) {
+          if (isListNode(nextSibling) || isTextBlock(editor, nextSibling) || !nextSibling && node.parentNode === root) {
+            block = null;
+            return;
+          }
+        }
+        if (!block) {
+          block = dom.create('p');
+          (_a = node.parentNode) === null || _a === void 0 ? void 0 : _a.insertBefore(block, node);
+          textBlocks.push(block);
+        }
+        block.appendChild(node);
+      });
+      return textBlocks;
+    };
+    const hasCompatibleStyle = (dom, sib, detail) => {
+      const sibStyle = dom.getStyle(sib, 'list-style-type');
+      let detailStyle = detail ? detail['list-style-type'] : '';
+      detailStyle = detailStyle === null ? '' : detailStyle;
+      return sibStyle === detailStyle;
+    };
+    const getRootSearchStart = (editor, range) => {
+      const start = editor.selection.getStart(true);
+      const startPoint = getEndPointNode(editor, range, true, editor.getBody());
+      if (ancestor(SugarElement.fromDom(startPoint), SugarElement.fromDom(range.commonAncestorContainer))) {
+        return range.commonAncestorContainer;
+      } else {
+        return start;
+      }
+    };
+    const applyList = (editor, listName, detail) => {
+      const rng = editor.selection.getRng();
+      let listItemName = 'LI';
+      const root = getClosestListHost(editor, getRootSearchStart(editor, rng));
+      const dom = editor.dom;
+      if (dom.getContentEditable(editor.selection.getNode()) === 'false') {
+        return;
+      }
+      listName = listName.toUpperCase();
+      if (listName === 'DL') {
+        listItemName = 'DT';
+      }
+      const bookmark = createBookmark(rng);
+      const selectedTextBlocks = filter$1(getSelectedTextBlocks(editor, rng, root), editor.dom.isEditable);
+      global$2.each(selectedTextBlocks, block => {
+        let listBlock;
+        const sibling = block.previousSibling;
+        const parent = block.parentNode;
+        if (!isListItemNode(parent)) {
+          if (sibling && isListNode(sibling) && sibling.nodeName === listName && hasCompatibleStyle(dom, sibling, detail)) {
+            listBlock = sibling;
+            block = dom.rename(block, listItemName);
+            sibling.appendChild(block);
+          } else {
+            listBlock = dom.create(listName);
+            parent.insertBefore(listBlock, block);
+            listBlock.appendChild(block);
+            block = dom.rename(block, listItemName);
+          }
+          removeStyles(dom, block, [
+            'margin',
+            'margin-right',
+            'margin-bottom',
+            'margin-left',
+            'margin-top',
+            'padding',
+            'padding-right',
+            'padding-bottom',
+            'padding-left',
+            'padding-top'
+          ]);
+          updateListWithDetails(dom, listBlock, detail);
+          mergeWithAdjacentLists(editor.dom, listBlock);
+        }
+      });
+      editor.selection.setRng(resolveBookmark(bookmark));
+    };
+    const isValidLists = (list1, list2) => {
+      return isListNode(list1) && list1.nodeName === (list2 === null || list2 === void 0 ? void 0 : list2.nodeName);
+    };
+    const hasSameListStyle = (dom, list1, list2) => {
+      const targetStyle = dom.getStyle(list1, 'list-style-type', true);
+      const style = dom.getStyle(list2, 'list-style-type', true);
+      return targetStyle === style;
+    };
+    const hasSameClasses = (elm1, elm2) => {
+      return elm1.className === elm2.className;
+    };
+    const shouldMerge = (dom, list1, list2) => {
+      return isValidLists(list1, list2) && hasSameListStyle(dom, list1, list2) && hasSameClasses(list1, list2);
+    };
+    const mergeWithAdjacentLists = (dom, listBlock) => {
+      let node;
+      let sibling = listBlock.nextSibling;
+      if (shouldMerge(dom, listBlock, sibling)) {
+        const liSibling = sibling;
+        while (node = liSibling.firstChild) {
+          listBlock.appendChild(node);
+        }
+        dom.remove(liSibling);
+      }
+      sibling = listBlock.previousSibling;
+      if (shouldMerge(dom, listBlock, sibling)) {
+        const liSibling = sibling;
+        while (node = liSibling.lastChild) {
+          listBlock.insertBefore(node, listBlock.firstChild);
+        }
+        dom.remove(liSibling);
+      }
+    };
+    const updateList$1 = (editor, list, listName, detail) => {
+      if (list.nodeName !== listName) {
+        const newList = editor.dom.rename(list, listName);
+        updateListWithDetails(editor.dom, newList, detail);
+        fireListEvent(editor, listToggleActionFromListName(listName), newList);
+      } else {
+        updateListWithDetails(editor.dom, list, detail);
+        fireListEvent(editor, listToggleActionFromListName(listName), list);
+      }
+    };
+    const updateCustomList = (editor, list, listName, detail) => {
+      list.classList.forEach((cls, _, classList) => {
+        if (cls.startsWith('tox-')) {
+          classList.remove(cls);
+          if (classList.length === 0) {
+            list.removeAttribute('class');
+          }
+        }
+      });
+      if (list.nodeName !== listName) {
+        const newList = editor.dom.rename(list, listName);
+        updateListWithDetails(editor.dom, newList, detail);
+        fireListEvent(editor, listToggleActionFromListName(listName), newList);
+      } else {
+        updateListWithDetails(editor.dom, list, detail);
+        fireListEvent(editor, listToggleActionFromListName(listName), list);
+      }
+    };
+    const toggleMultipleLists = (editor, parentList, lists, listName, detail) => {
+      const parentIsList = isListNode(parentList);
+      if (parentIsList && parentList.nodeName === listName && !hasListStyleDetail(detail) && !isCustomList(parentList)) {
+        flattenListSelection(editor);
+      } else {
+        applyList(editor, listName, detail);
+        const bookmark = createBookmark(editor.selection.getRng());
+        const allLists = parentIsList ? [
+          parentList,
+          ...lists
+        ] : lists;
+        const updateFunction = parentIsList && isCustomList(parentList) ? updateCustomList : updateList$1;
+        global$2.each(allLists, elm => {
+          updateFunction(editor, elm, listName, detail);
+        });
+        editor.selection.setRng(resolveBookmark(bookmark));
+      }
+    };
+    const hasListStyleDetail = detail => {
+      return 'list-style-type' in detail;
+    };
+    const toggleSingleList = (editor, parentList, listName, detail) => {
+      if (parentList === editor.getBody()) {
+        return;
+      }
+      if (parentList) {
+        if (parentList.nodeName === listName && !hasListStyleDetail(detail) && !isCustomList(parentList)) {
+          flattenListSelection(editor);
+        } else {
+          const bookmark = createBookmark(editor.selection.getRng());
+          if (isCustomList(parentList)) {
+            parentList.classList.forEach((cls, _, classList) => {
+              if (cls.startsWith('tox-')) {
+                classList.remove(cls);
+                if (classList.length === 0) {
+                  parentList.removeAttribute('class');
+                }
+              }
+            });
+          }
+          updateListWithDetails(editor.dom, parentList, detail);
+          const newList = editor.dom.rename(parentList, listName);
+          mergeWithAdjacentLists(editor.dom, newList);
+          editor.selection.setRng(resolveBookmark(bookmark));
+          applyList(editor, listName, detail);
+          fireListEvent(editor, listToggleActionFromListName(listName), newList);
+        }
+      } else {
+        applyList(editor, listName, detail);
+        fireListEvent(editor, listToggleActionFromListName(listName), parentList);
+      }
+    };
+    const toggleList = (editor, listName, _detail) => {
+      const parentList = getParentList(editor);
+      if (isWithinNonEditableList(editor, parentList)) {
+        return;
+      }
+      const selectedSubLists = getSelectedSubLists(editor);
+      const detail = isObject(_detail) ? _detail : {};
+      if (selectedSubLists.length > 0) {
+        toggleMultipleLists(editor, parentList, selectedSubLists, listName, detail);
+      } else {
+        toggleSingleList(editor, parentList, listName, detail);
       }
     };
 
-    return {
-      indentSelection: indentSelection
-    };
-  }
-);
-
-
-/**
- * NormalizeLists.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.plugins.lists.core.NormalizeLists',
-  [
-    'tinymce.core.dom.DOMUtils',
-    'tinymce.core.util.Tools',
-    'tinymce.plugins.lists.core.NodeType'
-  ],
-  function (DOMUtils, Tools, NodeType) {
-    var DOM = DOMUtils.DOM;
-
-    var normalizeList = function (dom, ul) {
-      var sibling, parentNode = ul.parentNode;
-
-      // Move UL/OL to previous LI if it's the only child of a LI
-      if (parentNode.nodeName === 'LI' && parentNode.firstChild === ul) {
-        sibling = parentNode.previousSibling;
+    const DOM = global$3.DOM;
+    const normalizeList = (dom, list) => {
+      const parentNode = list.parentElement;
+      if (parentNode && parentNode.nodeName === 'LI' && parentNode.firstChild === list) {
+        const sibling = parentNode.previousSibling;
         if (sibling && sibling.nodeName === 'LI') {
-          sibling.appendChild(ul);
-
-          if (NodeType.isEmpty(dom, parentNode)) {
+          sibling.appendChild(list);
+          if (isEmpty$2(dom, parentNode)) {
             DOM.remove(parentNode);
           }
         } else {
           DOM.setStyle(parentNode, 'listStyleType', 'none');
         }
       }
-
-      // Append OL/UL to previous LI if it's in a parent OL/UL i.e. old HTML4
-      if (NodeType.isListNode(parentNode)) {
-        sibling = parentNode.previousSibling;
+      if (isListNode(parentNode)) {
+        const sibling = parentNode.previousSibling;
         if (sibling && sibling.nodeName === 'LI') {
-          sibling.appendChild(ul);
+          sibling.appendChild(list);
         }
       }
     };
-
-    var normalizeLists = function (dom, element) {
-      Tools.each(Tools.grep(dom.select('ol,ul', element)), function (ul) {
-        normalizeList(dom, ul);
+    const normalizeLists = (dom, element) => {
+      const lists = global$2.grep(dom.select('ol,ul', element));
+      global$2.each(lists, list => {
+        normalizeList(dom, list);
       });
     };
 
-    return {
-      normalizeList: normalizeList,
-      normalizeLists: normalizeLists
-    };
-  }
-);
-
-
-/**
- * ResolveGlobal.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.core.Env',
-  [
-    'global!tinymce.util.Tools.resolve'
-  ],
-  function (resolve) {
-    return resolve('tinymce.Env');
-  }
-);
-
-/**
- * TextBlock.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.plugins.lists.core.TextBlock',
-  [
-    'tinymce.core.dom.DOMUtils',
-    'tinymce.core.Env'
-  ],
-  function (DOMUtils, Env) {
-    var DOM = DOMUtils.DOM;
-
-    var createNewTextBlock = function (editor, contentNode, blockName) {
-      var node, textBlock, fragment = DOM.createFragment(), hasContentNode;
-      var blockElements = editor.schema.getBlockElements();
-
-      if (editor.settings.forced_root_block) {
-        blockName = blockName || editor.settings.forced_root_block;
-      }
-
-      if (blockName) {
-        textBlock = DOM.create(blockName);
-
-        if (textBlock.tagName === editor.settings.forced_root_block) {
-          DOM.setAttribs(textBlock, editor.settings.forced_root_block_attrs);
-        }
-
-        fragment.appendChild(textBlock);
-      }
-
-      if (contentNode) {
-        while ((node = contentNode.firstChild)) {
-          var nodeName = node.nodeName;
-
-          if (!hasContentNode && (nodeName !== 'SPAN' || node.getAttribute('data-mce-type') !== 'bookmark')) {
-            hasContentNode = true;
-          }
-
-          if (blockElements[nodeName]) {
-            fragment.appendChild(node);
-            textBlock = null;
-          } else {
-            if (blockName) {
-              if (!textBlock) {
-                textBlock = DOM.create(blockName);
-                fragment.appendChild(textBlock);
-              }
-
-              textBlock.appendChild(node);
-            } else {
-              fragment.appendChild(node);
-            }
-          }
-        }
-      }
-
-      if (!editor.settings.forced_root_block) {
-        fragment.appendChild(DOM.create('br'));
-      } else {
-        // BR is needed in empty blocks on non IE browsers
-        if (!hasContentNode && (!Env.ie || Env.ie > 10)) {
-          textBlock.appendChild(DOM.create('br', { 'data-mce-bogus': '1' }));
-        }
-      }
-
-      return fragment;
-    };
-
-    return {
-      createNewTextBlock: createNewTextBlock
-    };
-  }
-);
-
-/**
- * SplitList.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.plugins.lists.core.SplitList',
-  [
-    'tinymce.core.dom.DOMUtils',
-    'tinymce.plugins.lists.core.NodeType',
-    'tinymce.plugins.lists.core.TextBlock',
-    'tinymce.core.util.Tools'
-  ],
-  function (DOMUtils, NodeType, TextBlock, Tools) {
-    var DOM = DOMUtils.DOM;
-
-    var splitList = function (editor, ul, li, newBlock) {
-      var tmpRng, fragment, bookmarks, node;
-
-      var removeAndKeepBookmarks = function (targetNode) {
-        Tools.each(bookmarks, function (node) {
-          targetNode.parentNode.insertBefore(node, li.parentNode);
-        });
-
-        DOM.remove(targetNode);
-      };
-
-      bookmarks = DOM.select('span[data-mce-type="bookmark"]', ul);
-      newBlock = newBlock || TextBlock.createNewTextBlock(editor, li);
-      tmpRng = DOM.createRng();
-      tmpRng.setStartAfter(li);
-      tmpRng.setEndAfter(ul);
-      fragment = tmpRng.extractContents();
-
-      for (node = fragment.firstChild; node; node = node.firstChild) {
-        if (node.nodeName === 'LI' && editor.dom.isEmpty(node)) {
-          DOM.remove(node);
-          break;
-        }
-      }
-
-      if (!editor.dom.isEmpty(fragment)) {
-        DOM.insertAfter(fragment, ul);
-      }
-
-      DOM.insertAfter(newBlock, ul);
-
-      if (NodeType.isEmpty(editor.dom, li.parentNode)) {
-        removeAndKeepBookmarks(li.parentNode);
-      }
-
-      DOM.remove(li);
-
-      if (NodeType.isEmpty(editor.dom, ul)) {
-        DOM.remove(ul);
-      }
-    };
-
-    return {
-      splitList: splitList
-    };
-  }
-);
-
-
-/**
- * Outdent.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.plugins.lists.actions.Outdent',
-  [
-    'tinymce.core.dom.DOMUtils',
-    'tinymce.plugins.lists.core.Bookmark',
-    'tinymce.plugins.lists.core.NodeType',
-    'tinymce.plugins.lists.core.NormalizeLists',
-    'tinymce.plugins.lists.core.Selection',
-    'tinymce.plugins.lists.core.SplitList',
-    'tinymce.plugins.lists.core.TextBlock'
-  ],
-  function (DOMUtils, Bookmark, NodeType, NormalizeLists, Selection, SplitList, TextBlock) {
-    var DOM = DOMUtils.DOM;
-
-    var removeEmptyLi = function (dom, li) {
-      if (NodeType.isEmpty(dom, li)) {
-        DOM.remove(li);
-      }
-    };
-
-    var outdent = function (editor, li) {
-      var ul = li.parentNode, ulParent = ul.parentNode, newBlock;
-
-      if (ul === editor.getBody()) {
-        return true;
-      }
-
-      if (li.nodeName === 'DD') {
-        DOM.rename(li, 'DT');
-        return true;
-      }
-
-      if (NodeType.isFirstChild(li) && NodeType.isLastChild(li)) {
-        if (ulParent.nodeName === "LI") {
-          DOM.insertAfter(li, ulParent);
-          removeEmptyLi(editor.dom, ulParent);
-          DOM.remove(ul);
-        } else if (NodeType.isListNode(ulParent)) {
-          DOM.remove(ul, true);
-        } else {
-          ulParent.insertBefore(TextBlock.createNewTextBlock(editor, li), ul);
-          DOM.remove(ul);
-        }
-
-        return true;
-      } else if (NodeType.isFirstChild(li)) {
-        if (ulParent.nodeName === "LI") {
-          DOM.insertAfter(li, ulParent);
-          li.appendChild(ul);
-          removeEmptyLi(editor.dom, ulParent);
-        } else if (NodeType.isListNode(ulParent)) {
-          ulParent.insertBefore(li, ul);
-        } else {
-          ulParent.insertBefore(TextBlock.createNewTextBlock(editor, li), ul);
-          DOM.remove(li);
-        }
-
-        return true;
-      } else if (NodeType.isLastChild(li)) {
-        if (ulParent.nodeName === "LI") {
-          DOM.insertAfter(li, ulParent);
-        } else if (NodeType.isListNode(ulParent)) {
-          DOM.insertAfter(li, ul);
-        } else {
-          DOM.insertAfter(TextBlock.createNewTextBlock(editor, li), ul);
-          DOM.remove(li);
-        }
-
-        return true;
-      }
-
-      if (ulParent.nodeName === 'LI') {
-        ul = ulParent;
-        newBlock = TextBlock.createNewTextBlock(editor, li, 'LI');
-      } else if (NodeType.isListNode(ulParent)) {
-        newBlock = TextBlock.createNewTextBlock(editor, li, 'LI');
-      } else {
-        newBlock = TextBlock.createNewTextBlock(editor, li);
-      }
-
-      SplitList.splitList(editor, ul, li, newBlock);
-      NormalizeLists.normalizeLists(editor.dom, ul.parentNode);
-
-      return true;
-    };
-
-    var outdentSelection = function (editor) {
-      var listElements = Selection.getSelectedListItems(editor);
-
-      if (listElements.length) {
-        var bookmark = Bookmark.createBookmark(editor.selection.getRng(true));
-        var i, y, root = editor.getBody();
-
-        i = listElements.length;
-        while (i--) {
-          var node = listElements[i].parentNode;
-
-          while (node && node !== root) {
-            y = listElements.length;
-            while (y--) {
-              if (listElements[y] === node) {
-                listElements.splice(i, 1);
-                break;
-              }
-            }
-
-            node = node.parentNode;
-          }
-        }
-
-        for (i = 0; i < listElements.length; i++) {
-          if (!outdent(editor, listElements[i]) && i === 0) {
-            break;
-          }
-        }
-
-        editor.selection.setRng(Bookmark.resolveBookmark(bookmark));
-        editor.nodeChanged();
-
-        return true;
-      }
-    };
-
-    return {
-      outdent: outdent,
-      outdentSelection: outdentSelection
-    };
-  }
-);
-
-
-/**
- * ResolveGlobal.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.core.dom.BookmarkManager',
-  [
-    'global!tinymce.util.Tools.resolve'
-  ],
-  function (resolve) {
-    return resolve('tinymce.dom.BookmarkManager');
-  }
-);
-
-/**
- * ToggleList.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.plugins.lists.actions.ToggleList',
-  [
-    'tinymce.core.dom.BookmarkManager',
-    'tinymce.core.util.Tools',
-    'tinymce.plugins.lists.actions.Outdent',
-    'tinymce.plugins.lists.core.Bookmark',
-    'tinymce.plugins.lists.core.NodeType',
-    'tinymce.plugins.lists.core.NormalizeLists',
-    'tinymce.plugins.lists.core.Selection',
-    'tinymce.plugins.lists.core.SplitList'
-  ],
-  function (BookmarkManager, Tools, Outdent, Bookmark, NodeType, NormalizeLists, Selection, SplitList) {
-    var updateListStyle = function (dom, el, detail) {
-      var type = detail['list-style-type'] ? detail['list-style-type'] : null;
-      dom.setStyle(el, 'list-style-type', type);
-    };
-
-    var setAttribs = function (elm, attrs) {
-      Tools.each(attrs, function (value, key) {
-        elm.setAttribute(key, value);
-      });
-    };
-
-    var updateListAttrs = function (dom, el, detail) {
-      setAttribs(el, detail['list-attributes']);
-      Tools.each(dom.select('li', el), function (li) {
-        setAttribs(li, detail['list-item-attributes']);
-      });
-    };
-
-    var updateListWithDetails = function (dom, el, detail) {
-      updateListStyle(dom, el, detail);
-      updateListAttrs(dom, el, detail);
-    };
-
-    var getEndPointNode = function (editor, rng, start) {
-      var container, offset, root = editor.getBody();
-
-      container = rng[start ? 'startContainer' : 'endContainer'];
-      offset = rng[start ? 'startOffset' : 'endOffset'];
-
-      // Resolve node index
-      if (container.nodeType === 1) {
-        container = container.childNodes[Math.min(offset, container.childNodes.length - 1)] || container;
-      }
-
-      while (container.parentNode !== root) {
-        if (NodeType.isTextBlock(editor, container)) {
-          return container;
-        }
-
-        if (/^(TD|TH)$/.test(container.parentNode.nodeName)) {
-          return container;
-        }
-
-        container = container.parentNode;
-      }
-
-      return container;
-    };
-
-    var getSelectedTextBlocks = function (editor, rng) {
-      var textBlocks = [], root = editor.getBody(), dom = editor.dom;
-
-      var startNode = getEndPointNode(editor, rng, true);
-      var endNode = getEndPointNode(editor, rng, false);
-      var block, siblings = [];
-
-      for (var node = startNode; node; node = node.nextSibling) {
-        siblings.push(node);
-
-        if (node === endNode) {
-          break;
-        }
-      }
-
-      Tools.each(siblings, function (node) {
-        if (NodeType.isTextBlock(editor, node)) {
-          textBlocks.push(node);
-          block = null;
-          return;
-        }
-
-        if (dom.isBlock(node) || NodeType.isBr(node)) {
-          if (NodeType.isBr(node)) {
-            dom.remove(node);
-          }
-
-          block = null;
-          return;
-        }
-
-        var nextSibling = node.nextSibling;
-        if (BookmarkManager.isBookmarkNode(node)) {
-          if (NodeType.isTextBlock(editor, nextSibling) || (!nextSibling && node.parentNode === root)) {
-            block = null;
-            return;
-          }
-        }
-
-        if (!block) {
-          block = dom.create('p');
-          node.parentNode.insertBefore(block, node);
-          textBlocks.push(block);
-        }
-
-        block.appendChild(node);
-      });
-
-      return textBlocks;
-    };
-
-    var applyList = function (editor, listName, detail) {
-      var rng = editor.selection.getRng(true), bookmark, listItemName = 'LI';
-      var dom = editor.dom;
-
-      detail = detail ? detail : {};
-
-      if (dom.getContentEditable(editor.selection.getNode()) === "false") {
-        return;
-      }
-
-      listName = listName.toUpperCase();
-
-      if (listName === 'DL') {
-        listItemName = 'DT';
-      }
-
-      bookmark = Bookmark.createBookmark(rng);
-
-      Tools.each(getSelectedTextBlocks(editor, rng), function (block) {
-        var listBlock, sibling;
-
-        var hasCompatibleStyle = function (sib) {
-          var sibStyle = dom.getStyle(sib, 'list-style-type');
-          var detailStyle = detail ? detail['list-style-type'] : '';
-
-          detailStyle = detailStyle === null ? '' : detailStyle;
-
-          return sibStyle === detailStyle;
-        };
-
-        sibling = block.previousSibling;
-        if (sibling && NodeType.isListNode(sibling) && sibling.nodeName === listName && hasCompatibleStyle(sibling)) {
-          listBlock = sibling;
-          block = dom.rename(block, listItemName);
-          sibling.appendChild(block);
-        } else {
-          listBlock = dom.create(listName);
-          block.parentNode.insertBefore(listBlock, block);
-          listBlock.appendChild(block);
-          block = dom.rename(block, listItemName);
-        }
-
-        updateListWithDetails(dom, listBlock, detail);
-        mergeWithAdjacentLists(editor.dom, listBlock);
-      });
-
-      editor.selection.setRng(Bookmark.resolveBookmark(bookmark));
-    };
-
-    var removeList = function (editor) {
-      var bookmark = Bookmark.createBookmark(editor.selection.getRng(true)), root = editor.getBody();
-      var listItems = Selection.getSelectedListItems(editor);
-      var emptyListItems = Tools.grep(listItems, function (li) {
-        return editor.dom.isEmpty(li);
-      });
-
-      listItems = Tools.grep(listItems, function (li) {
-        return !editor.dom.isEmpty(li);
-      });
-
-      Tools.each(emptyListItems, function (li) {
-        if (NodeType.isEmpty(editor.dom, li)) {
-          Outdent.outdent(editor, li);
-          return;
-        }
-      });
-
-      Tools.each(listItems, function (li) {
-        var node, rootList;
-
-        if (li.parentNode === editor.getBody()) {
-          return;
-        }
-
-        for (node = li; node && node !== root; node = node.parentNode) {
-          if (NodeType.isListNode(node)) {
-            rootList = node;
-          }
-        }
-
-        SplitList.splitList(editor, rootList, li);
-        NormalizeLists.normalizeLists(editor.dom, rootList.parentNode);
-      });
-
-      editor.selection.setRng(Bookmark.resolveBookmark(bookmark));
-    };
-
-    var isValidLists = function (list1, list2) {
-      return list1 && list2 && NodeType.isListNode(list1) && list1.nodeName === list2.nodeName;
-    };
-
-    var hasSameListStyle = function (dom, list1, list2) {
-      var targetStyle = dom.getStyle(list1, 'list-style-type', true);
-      var style = dom.getStyle(list2, 'list-style-type', true);
-      return targetStyle === style;
-    };
-
-    var hasSameClasses = function (elm1, elm2) {
-      return elm1.className === elm2.className;
-    };
-
-    var shouldMerge = function (dom, list1, list2) {
-      return isValidLists(list1, list2) && hasSameListStyle(dom, list1, list2) && hasSameClasses(list1, list2);
-    };
-
-    var mergeWithAdjacentLists = function (dom, listBlock) {
-      var sibling, node;
-
-      sibling = listBlock.nextSibling;
-      if (shouldMerge(dom, listBlock, sibling)) {
-        while ((node = sibling.firstChild)) {
-          listBlock.appendChild(node);
-        }
-
-        dom.remove(sibling);
-      }
-
-      sibling = listBlock.previousSibling;
-      if (shouldMerge(dom, listBlock, sibling)) {
-        while ((node = sibling.lastChild)) {
-          listBlock.insertBefore(node, listBlock.firstChild);
-        }
-
-        dom.remove(sibling);
-      }
-    };
-
-    var toggleList = function (editor, listName, detail) {
-      var parentList = editor.dom.getParent(editor.selection.getStart(), 'OL,UL,DL');
-
-      detail = detail ? detail : {};
-
-      if (parentList === editor.getBody()) {
-        return;
-      }
-
-      if (parentList) {
-        if (parentList.nodeName === listName) {
-          removeList(editor, listName);
-        } else {
-          var bookmark = Bookmark.createBookmark(editor.selection.getRng(true));
-          updateListWithDetails(editor.dom, parentList, detail);
-          mergeWithAdjacentLists(editor.dom, editor.dom.rename(parentList, listName));
-          editor.selection.setRng(Bookmark.resolveBookmark(bookmark));
-        }
-      } else {
-        applyList(editor, listName, detail);
-      }
-    };
-
-    return {
-      toggleList: toggleList,
-      removeList: removeList,
-      mergeWithAdjacentLists: mergeWithAdjacentLists
-    };
-  }
-);
-
-
-/**
- * ResolveGlobal.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.core.dom.TreeWalker',
-  [
-    'global!tinymce.util.Tools.resolve'
-  ],
-  function (resolve) {
-    return resolve('tinymce.dom.TreeWalker');
-  }
-);
-
-/**
- * Delete.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.plugins.lists.core.Delete',
-  [
-    'tinymce.core.dom.RangeUtils',
-    'tinymce.core.dom.TreeWalker',
-    'tinymce.core.util.VK',
-    'tinymce.plugins.lists.actions.ToggleList',
-    'tinymce.plugins.lists.core.Bookmark',
-    'tinymce.plugins.lists.core.NodeType',
-    'tinymce.plugins.lists.core.NormalizeLists',
-    'tinymce.plugins.lists.core.Range',
-    'tinymce.plugins.lists.core.Selection'
-  ],
-  function (RangeUtils, TreeWalker, VK, ToggleList, Bookmark, NodeType, NormalizeLists, Range, Selection) {
-    var findNextCaretContainer = function (editor, rng, isForward) {
-      var node = rng.startContainer, offset = rng.startOffset;
-      var nonEmptyBlocks, walker;
-
-      if (node.nodeType === 3 && (isForward ? offset < node.data.length : offset > 0)) {
+    const findNextCaretContainer = (editor, rng, isForward, root) => {
+      let node = rng.startContainer;
+      const offset = rng.startOffset;
+      if (isTextNode$1(node) && (isForward ? offset < node.data.length : offset > 0)) {
         return node;
       }
-
-      nonEmptyBlocks = editor.schema.getNonEmptyElements();
-      if (node.nodeType === 1) {
-        node = RangeUtils.getNode(node, offset);
+      const nonEmptyBlocks = editor.schema.getNonEmptyElements();
+      if (isElement(node)) {
+        node = global$6.getNode(node, offset);
       }
-
-      walker = new TreeWalker(node, editor.getBody());
-
-      // Delete at <li>|<br></li> then jump over the bogus br
+      const walker = new global$5(node, root);
       if (isForward) {
-        if (NodeType.isBogusBr(editor.dom, node)) {
+        if (isBogusBr(editor.dom, node)) {
           walker.next();
         }
       }
-
-      while ((node = walker[isForward ? 'next' : 'prev2']())) {
+      const walkFn = isForward ? walker.next.bind(walker) : walker.prev2.bind(walker);
+      while (node = walkFn()) {
         if (node.nodeName === 'LI' && !node.hasChildNodes()) {
           return node;
         }
-
         if (nonEmptyBlocks[node.nodeName]) {
           return node;
         }
-
-        if (node.nodeType === 3 && node.data.length > 0) {
+        if (isTextNode$1(node) && node.data.length > 0) {
           return node;
         }
       }
+      return null;
     };
-
-    var mergeLiElements = function (dom, fromElm, toElm) {
-      var node, listNode, ul = fromElm.parentNode;
-
-      if (!NodeType.isChildOfBody(dom, fromElm) || !NodeType.isChildOfBody(dom, toElm)) {
+    const hasOnlyOneBlockChild = (dom, elm) => {
+      const childNodes = elm.childNodes;
+      return childNodes.length === 1 && !isListNode(childNodes[0]) && dom.isBlock(childNodes[0]);
+    };
+    const isUnwrappable = node => Optional.from(node).map(SugarElement.fromDom).filter(isHTMLElement).exists(el => isEditable(el) && !contains$1(['details'], name(el)));
+    const unwrapSingleBlockChild = (dom, elm) => {
+      if (hasOnlyOneBlockChild(dom, elm) && isUnwrappable(elm.firstChild)) {
+        dom.remove(elm.firstChild, true);
+      }
+    };
+    const moveChildren = (dom, fromElm, toElm) => {
+      let node;
+      const targetElm = hasOnlyOneBlockChild(dom, toElm) ? toElm.firstChild : toElm;
+      unwrapSingleBlockChild(dom, fromElm);
+      if (!isEmpty$2(dom, fromElm, true)) {
+        while (node = fromElm.firstChild) {
+          targetElm.appendChild(node);
+        }
+      }
+    };
+    const mergeLiElements = (dom, fromElm, toElm) => {
+      let listNode;
+      const ul = fromElm.parentNode;
+      if (!isChildOfBody(dom, fromElm) || !isChildOfBody(dom, toElm)) {
         return;
       }
-
-      if (NodeType.isListNode(toElm.lastChild)) {
+      if (isListNode(toElm.lastChild)) {
         listNode = toElm.lastChild;
       }
-
       if (ul === toElm.lastChild) {
-        if (NodeType.isBr(ul.previousSibling)) {
+        if (isBr(ul.previousSibling)) {
           dom.remove(ul.previousSibling);
         }
       }
-
-      node = toElm.lastChild;
-      if (node && NodeType.isBr(node) && fromElm.hasChildNodes()) {
+      const node = toElm.lastChild;
+      if (node && isBr(node) && fromElm.hasChildNodes()) {
         dom.remove(node);
       }
-
-      if (NodeType.isEmpty(dom, toElm, true)) {
-        dom.$(toElm).empty();
+      if (isEmpty$2(dom, toElm, true)) {
+        empty(SugarElement.fromDom(toElm));
       }
-
-      if (!NodeType.isEmpty(dom, fromElm, true)) {
-        while ((node = fromElm.firstChild)) {
-          toElm.appendChild(node);
-        }
-      }
-
+      moveChildren(dom, fromElm, toElm);
       if (listNode) {
         toElm.appendChild(listNode);
       }
-
+      const contains$1 = contains(SugarElement.fromDom(toElm), SugarElement.fromDom(fromElm));
+      const nestedLists = contains$1 ? dom.getParents(fromElm, isListNode, toElm) : [];
       dom.remove(fromElm);
-
-      if (NodeType.isEmpty(dom, ul) && ul !== dom.getRoot()) {
-        dom.remove(ul);
+      each$1(nestedLists, list => {
+        if (isEmpty$2(dom, list) && list !== dom.getRoot()) {
+          dom.remove(list);
+        }
+      });
+    };
+    const mergeIntoEmptyLi = (editor, fromLi, toLi) => {
+      empty(SugarElement.fromDom(toLi));
+      mergeLiElements(editor.dom, fromLi, toLi);
+      editor.selection.setCursorLocation(toLi, 0);
+    };
+    const mergeForward = (editor, rng, fromLi, toLi) => {
+      const dom = editor.dom;
+      if (dom.isEmpty(toLi)) {
+        mergeIntoEmptyLi(editor, fromLi, toLi);
+      } else {
+        const bookmark = createBookmark(rng);
+        mergeLiElements(dom, fromLi, toLi);
+        editor.selection.setRng(resolveBookmark(bookmark));
       }
     };
-
-    var backspaceDeleteFromListToListCaret = function (editor, isForward) {
-      var dom = editor.dom, selection = editor.selection;
-      var li = dom.getParent(selection.getStart(), 'LI'), ul, rng, otherLi;
-
+    const mergeBackward = (editor, rng, fromLi, toLi) => {
+      const bookmark = createBookmark(rng);
+      mergeLiElements(editor.dom, fromLi, toLi);
+      const resolvedBookmark = resolveBookmark(bookmark);
+      editor.selection.setRng(resolvedBookmark);
+    };
+    const backspaceDeleteFromListToListCaret = (editor, isForward) => {
+      const dom = editor.dom, selection = editor.selection;
+      const selectionStartElm = selection.getStart();
+      const root = getClosestEditingHost(editor, selectionStartElm);
+      const li = dom.getParent(selection.getStart(), 'LI', root);
       if (li) {
-        ul = li.parentNode;
-        if (ul === editor.getBody() && NodeType.isEmpty(dom, ul)) {
+        const ul = li.parentElement;
+        if (ul === editor.getBody() && isEmpty$2(dom, ul)) {
           return true;
         }
-
-        rng = Range.normalizeRange(selection.getRng(true));
-        otherLi = dom.getParent(findNextCaretContainer(editor, rng, isForward), 'LI');
-
-        if (otherLi && otherLi !== li) {
-          var bookmark = Bookmark.createBookmark(rng);
-
-          if (isForward) {
-            mergeLiElements(dom, otherLi, li);
-          } else {
-            mergeLiElements(dom, li, otherLi);
-          }
-
-          editor.selection.setRng(Bookmark.resolveBookmark(bookmark));
-
+        const rng = normalizeRange(selection.getRng());
+        const otherLi = dom.getParent(findNextCaretContainer(editor, rng, isForward, root), 'LI', root);
+        const willMergeParentIntoChild = otherLi && (isForward ? dom.isChildOf(li, otherLi) : dom.isChildOf(otherLi, li));
+        if (otherLi && otherLi !== li && !willMergeParentIntoChild) {
+          editor.undoManager.transact(() => {
+            if (isForward) {
+              mergeForward(editor, rng, otherLi, li);
+            } else {
+              if (isFirstChild(li)) {
+                outdentListSelection(editor);
+              } else {
+                mergeBackward(editor, rng, li, otherLi);
+              }
+            }
+          });
+          return true;
+        } else if (willMergeParentIntoChild && !isForward && otherLi !== li) {
+          editor.undoManager.transact(() => {
+            if (rng.commonAncestorContainer.parentElement) {
+              const bookmark = createBookmark(rng);
+              const oldParentElRef = rng.commonAncestorContainer.parentElement;
+              moveChildren(dom, rng.commonAncestorContainer.parentElement, otherLi);
+              oldParentElRef.remove();
+              const resolvedBookmark = resolveBookmark(bookmark);
+              editor.selection.setRng(resolvedBookmark);
+            }
+          });
           return true;
         } else if (!otherLi) {
-          if (!isForward && ToggleList.removeList(editor, ul.nodeName)) {
+          if (!isForward && rng.startOffset === 0 && rng.endOffset === 0) {
+            editor.undoManager.transact(() => {
+              flattenListSelection(editor);
+            });
             return true;
           }
         }
       }
-
       return false;
     };
-
-    var backspaceDeleteIntoListCaret = function (editor, isForward) {
-      var dom = editor.dom;
-      var block = dom.getParent(editor.selection.getStart(), dom.isBlock);
-
-      if (block && dom.isEmpty(block)) {
-        var rng = Range.normalizeRange(editor.selection.getRng(true));
-        var otherLi = dom.getParent(findNextCaretContainer(editor, rng, isForward), 'LI');
-
+    const removeBlock = (dom, block, root) => {
+      const parentBlock = dom.getParent(block.parentNode, dom.isBlock, root);
+      dom.remove(block);
+      if (parentBlock && dom.isEmpty(parentBlock)) {
+        dom.remove(parentBlock);
+      }
+    };
+    const backspaceDeleteIntoListCaret = (editor, isForward) => {
+      const dom = editor.dom;
+      const selectionStartElm = editor.selection.getStart();
+      const root = getClosestEditingHost(editor, selectionStartElm);
+      const block = dom.getParent(selectionStartElm, dom.isBlock, root);
+      if (block && dom.isEmpty(block, undefined, { checkRootAsContent: true })) {
+        const rng = normalizeRange(editor.selection.getRng());
+        const otherLi = dom.getParent(findNextCaretContainer(editor, rng, isForward, root), 'LI', root);
         if (otherLi) {
-          editor.undoManager.transact(function () {
-            dom.remove(block);
-            ToggleList.mergeWithAdjacentLists(dom, otherLi.parentNode);
+          const findValidElement = element => contains$1([
+            'td',
+            'th',
+            'caption'
+          ], name(element));
+          const findRoot = node => node.dom === root;
+          const otherLiCell = closest$2(SugarElement.fromDom(otherLi), findValidElement, findRoot);
+          const caretCell = closest$2(SugarElement.fromDom(rng.startContainer), findValidElement, findRoot);
+          if (!equals(otherLiCell, caretCell, eq)) {
+            return false;
+          }
+          editor.undoManager.transact(() => {
+            const parentNode = otherLi.parentNode;
+            removeBlock(dom, block, root);
+            mergeWithAdjacentLists(dom, parentNode);
             editor.selection.select(otherLi, true);
             editor.selection.collapse(isForward);
           });
-
           return true;
         }
       }
-
       return false;
     };
-
-    var backspaceDeleteCaret = function (editor, isForward) {
+    const backspaceDeleteCaret = (editor, isForward) => {
       return backspaceDeleteFromListToListCaret(editor, isForward) || backspaceDeleteIntoListCaret(editor, isForward);
     };
-
-    var backspaceDeleteRange = function (editor) {
-      var startListParent = editor.dom.getParent(editor.selection.getStart(), 'LI,DT,DD');
-
-      if (startListParent || Selection.getSelectedListItems(editor).length > 0) {
-        editor.undoManager.transact(function () {
+    const hasListSelection = editor => {
+      const selectionStartElm = editor.selection.getStart();
+      const root = getClosestEditingHost(editor, selectionStartElm);
+      const startListParent = editor.dom.getParent(selectionStartElm, 'LI,DT,DD', root);
+      return startListParent || getSelectedListItems(editor).length > 0;
+    };
+    const backspaceDeleteRange = editor => {
+      if (hasListSelection(editor)) {
+        editor.undoManager.transact(() => {
           editor.execCommand('Delete');
-          NormalizeLists.normalizeLists(editor.dom, editor.getBody());
+          normalizeLists(editor.dom, editor.getBody());
         });
-
         return true;
       }
-
       return false;
     };
-
-    var backspaceDelete = function (editor, isForward) {
-      return editor.selection.isCollapsed() ? backspaceDeleteCaret(editor, isForward) : backspaceDeleteRange(editor);
+    const backspaceDelete = (editor, isForward) => {
+      const selection = editor.selection;
+      return !isWithinNonEditableList(editor, selection.getNode()) && (selection.isCollapsed() ? backspaceDeleteCaret(editor, isForward) : backspaceDeleteRange(editor));
     };
-
-    var setup = function (editor) {
-      editor.on('keydown', function (e) {
-        if (e.keyCode === VK.BACKSPACE) {
+    const setup$2 = editor => {
+      editor.on('ExecCommand', e => {
+        const cmd = e.command.toLowerCase();
+        if ((cmd === 'delete' || cmd === 'forwarddelete') && hasListSelection(editor)) {
+          normalizeLists(editor.dom, editor.getBody());
+        }
+      });
+      editor.on('keydown', e => {
+        if (e.keyCode === global$4.BACKSPACE) {
           if (backspaceDelete(editor, false)) {
             e.preventDefault();
           }
-        } else if (e.keyCode === VK.DELETE) {
+        } else if (e.keyCode === global$4.DELETE) {
           if (backspaceDelete(editor, true)) {
             e.preventDefault();
           }
@@ -1481,180 +1867,311 @@ define(
       });
     };
 
-    return {
-      setup: setup,
-      backspaceDelete: backspaceDelete
-    };
-  }
-);
+    const get = editor => ({
+      backspaceDelete: isForward => {
+        backspaceDelete(editor, isForward);
+      }
+    });
 
-
-/**
- * plugin.js
- *
- * Released under LGPL License.
- * Copyright (c) 1999-2017 Ephox Corp. All rights reserved
- *
- * License: http://www.tinymce.com/license
- * Contributing: http://www.tinymce.com/contributing
- */
-
-define(
-  'tinymce.plugins.lists.Plugin',
-  [
-    'tinymce.core.PluginManager',
-    'tinymce.core.util.Tools',
-    'tinymce.core.util.VK',
-    'tinymce.plugins.lists.actions.Indent',
-    'tinymce.plugins.lists.actions.Outdent',
-    'tinymce.plugins.lists.actions.ToggleList',
-    'tinymce.plugins.lists.core.Delete',
-    'tinymce.plugins.lists.core.NodeType'
-  ],
-  function (PluginManager, Tools, VK, Indent, Outdent, ToggleList, Delete, NodeType) {
-    var queryListCommandState = function (editor, listName) {
-      return function () {
-        var parentList = editor.dom.getParent(editor.selection.getStart(), 'UL,OL,DL');
-        return parentList && parentList.nodeName === listName;
-      };
-    };
-
-    var setupCommands = function (editor) {
-      editor.on('BeforeExecCommand', function (e) {
-        var cmd = e.command.toLowerCase(), isHandled;
-
-        if (cmd === "indent") {
-          if (Indent.indentSelection(editor)) {
-            isHandled = true;
-          }
-        } else if (cmd === "outdent") {
-          if (Outdent.outdentSelection(editor)) {
-            isHandled = true;
-          }
+    const updateList = (editor, update) => {
+      const parentList = getParentList(editor);
+      if (parentList === null || isWithinNonEditableList(editor, parentList)) {
+        return;
+      }
+      editor.undoManager.transact(() => {
+        if (isObject(update.styles)) {
+          editor.dom.setStyles(parentList, update.styles);
         }
-
-        if (isHandled) {
-          editor.fire('ExecCommand', { command: e.command });
-          e.preventDefault();
-          return true;
+        if (isObject(update.attrs)) {
+          each(update.attrs, (v, k) => editor.dom.setAttrib(parentList, k, v));
         }
       });
+    };
 
-      editor.addCommand('InsertUnorderedList', function (ui, detail) {
-        ToggleList.toggleList(editor, 'UL', detail);
+    const parseAlphabeticBase26 = str => {
+      const chars = reverse(trim(str).split(''));
+      const values = map(chars, (char, i) => {
+        const charValue = char.toUpperCase().charCodeAt(0) - 'A'.charCodeAt(0) + 1;
+        return Math.pow(26, i) * charValue;
       });
+      return foldl(values, (sum, v) => sum + v, 0);
+    };
+    const composeAlphabeticBase26 = value => {
+      value--;
+      if (value < 0) {
+        return '';
+      } else {
+        const remainder = value % 26;
+        const quotient = Math.floor(value / 26);
+        const rest = composeAlphabeticBase26(quotient);
+        const char = String.fromCharCode('A'.charCodeAt(0) + remainder);
+        return rest + char;
+      }
+    };
+    const isUppercase = str => /^[A-Z]+$/.test(str);
+    const isLowercase = str => /^[a-z]+$/.test(str);
+    const isNumeric = str => /^[0-9]+$/.test(str);
+    const deduceListType = start => {
+      if (isNumeric(start)) {
+        return 2;
+      } else if (isUppercase(start)) {
+        return 0;
+      } else if (isLowercase(start)) {
+        return 1;
+      } else if (isEmpty$1(start)) {
+        return 3;
+      } else {
+        return 4;
+      }
+    };
+    const parseStartValue = start => {
+      switch (deduceListType(start)) {
+      case 2:
+        return Optional.some({
+          listStyleType: Optional.none(),
+          start
+        });
+      case 0:
+        return Optional.some({
+          listStyleType: Optional.some('upper-alpha'),
+          start: parseAlphabeticBase26(start).toString()
+        });
+      case 1:
+        return Optional.some({
+          listStyleType: Optional.some('lower-alpha'),
+          start: parseAlphabeticBase26(start).toString()
+        });
+      case 3:
+        return Optional.some({
+          listStyleType: Optional.none(),
+          start: ''
+        });
+      case 4:
+        return Optional.none();
+      }
+    };
+    const parseDetail = detail => {
+      const start = parseInt(detail.start, 10);
+      if (is$2(detail.listStyleType, 'upper-alpha')) {
+        return composeAlphabeticBase26(start);
+      } else if (is$2(detail.listStyleType, 'lower-alpha')) {
+        return composeAlphabeticBase26(start).toLowerCase();
+      } else {
+        return detail.start;
+      }
+    };
 
-      editor.addCommand('InsertOrderedList', function (ui, detail) {
-        ToggleList.toggleList(editor, 'OL', detail);
-      });
-
-      editor.addCommand('InsertDefinitionList', function (ui, detail) {
-        ToggleList.toggleList(editor, 'DL', detail);
+    const open = editor => {
+      const currentList = getParentList(editor);
+      if (!isOlNode(currentList) || isWithinNonEditableList(editor, currentList)) {
+        return;
+      }
+      editor.windowManager.open({
+        title: 'List Properties',
+        body: {
+          type: 'panel',
+          items: [{
+              type: 'input',
+              name: 'start',
+              label: 'Start list at number',
+              inputMode: 'numeric'
+            }]
+        },
+        initialData: {
+          start: parseDetail({
+            start: editor.dom.getAttrib(currentList, 'start', '1'),
+            listStyleType: Optional.from(editor.dom.getStyle(currentList, 'list-style-type'))
+          })
+        },
+        buttons: [
+          {
+            type: 'cancel',
+            name: 'cancel',
+            text: 'Cancel'
+          },
+          {
+            type: 'submit',
+            name: 'save',
+            text: 'Save',
+            primary: true
+          }
+        ],
+        onSubmit: api => {
+          const data = api.getData();
+          parseStartValue(data.start).each(detail => {
+            editor.execCommand('mceListUpdate', false, {
+              attrs: { start: detail.start === '1' ? '' : detail.start },
+              styles: { 'list-style-type': detail.listStyleType.getOr('') }
+            });
+          });
+          api.close();
+        }
       });
     };
 
-    var setupStateHandlers = function (editor) {
+    const queryListCommandState = (editor, listName) => () => {
+      const parentList = getParentList(editor);
+      return isNonNullable(parentList) && parentList.nodeName === listName;
+    };
+    const registerDialog = editor => {
+      editor.addCommand('mceListProps', () => {
+        open(editor);
+      });
+    };
+    const register$2 = editor => {
+      editor.on('BeforeExecCommand', e => {
+        const cmd = e.command.toLowerCase();
+        if (cmd === 'indent') {
+          indentListSelection(editor);
+        } else if (cmd === 'outdent') {
+          outdentListSelection(editor);
+        }
+      });
+      editor.addCommand('InsertUnorderedList', (ui, detail) => {
+        toggleList(editor, 'UL', detail);
+      });
+      editor.addCommand('InsertOrderedList', (ui, detail) => {
+        toggleList(editor, 'OL', detail);
+      });
+      editor.addCommand('InsertDefinitionList', (ui, detail) => {
+        toggleList(editor, 'DL', detail);
+      });
+      editor.addCommand('RemoveList', () => {
+        flattenListSelection(editor);
+      });
+      registerDialog(editor);
+      editor.addCommand('mceListUpdate', (ui, detail) => {
+        if (isObject(detail)) {
+          updateList(editor, detail);
+        }
+      });
       editor.addQueryStateHandler('InsertUnorderedList', queryListCommandState(editor, 'UL'));
       editor.addQueryStateHandler('InsertOrderedList', queryListCommandState(editor, 'OL'));
       editor.addQueryStateHandler('InsertDefinitionList', queryListCommandState(editor, 'DL'));
     };
 
-    var setupTabKey = function (editor) {
-      editor.on('keydown', function (e) {
-        // Check for tab but not ctrl/cmd+tab since it switches browser tabs
-        if (e.keyCode !== 9 || VK.metaKeyPressed(e)) {
+    var global = tinymce.util.Tools.resolve('tinymce.html.Node');
+
+    const isTextNode = node => node.type === 3;
+    const isEmpty = nodeBuffer => nodeBuffer.length === 0;
+    const wrapInvalidChildren = list => {
+      const insertListItem = (buffer, refNode) => {
+        const li = global.create('li');
+        each$1(buffer, node => li.append(node));
+        if (refNode) {
+          list.insert(li, refNode, true);
+        } else {
+          list.append(li);
+        }
+      };
+      const reducer = (buffer, node) => {
+        if (isTextNode(node)) {
+          return [
+            ...buffer,
+            node
+          ];
+        } else if (!isEmpty(buffer) && !isTextNode(node)) {
+          insertListItem(buffer, node);
+          return [];
+        } else {
+          return buffer;
+        }
+      };
+      const restBuffer = foldl(list.children(), reducer, []);
+      if (!isEmpty(restBuffer)) {
+        insertListItem(restBuffer);
+      }
+    };
+    const setup$1 = editor => {
+      editor.on('PreInit', () => {
+        const {parser} = editor;
+        parser.addNodeFilter('ul,ol', nodes => each$1(nodes, wrapInvalidChildren));
+      });
+    };
+
+    const setupTabKey = editor => {
+      editor.on('keydown', e => {
+        if (e.keyCode !== global$4.TAB || global$4.metaKeyPressed(e)) {
           return;
         }
-
-        if (editor.dom.getParent(editor.selection.getStart(), 'LI,DT,DD')) {
-          e.preventDefault();
-
-          if (e.shiftKey) {
-            Outdent.outdentSelection(editor);
-          } else {
-            Indent.indentSelection(editor);
+        editor.undoManager.transact(() => {
+          if (e.shiftKey ? outdentListSelection(editor) : indentListSelection(editor)) {
+            e.preventDefault();
           }
-        }
+        });
       });
     };
+    const setup = editor => {
+      if (shouldIndentOnTab(editor)) {
+        setupTabKey(editor);
+      }
+      setup$2(editor);
+    };
 
-    var setupUi = function (editor) {
-      var listState = function (listName) {
-        return function () {
-          var self = this;
-
-          editor.on('NodeChange', function (e) {
-            var lists = Tools.grep(e.parents, NodeType.isListNode);
-            self.active(lists.length > 0 && lists[0].nodeName === listName);
-          });
-        };
+    const setupToggleButtonHandler = (editor, listName) => api => {
+      const toggleButtonHandler = e => {
+        api.setActive(inList(e.parents, listName));
+        api.setEnabled(!isWithinNonEditableList(editor, e.element) && editor.selection.isEditable());
       };
-
-      var hasPlugin = function (editor, plugin) {
-        var plugins = editor.settings.plugins ? editor.settings.plugins : '';
-        return Tools.inArray(plugins.split(/[ ,]/), plugin) !== -1;
-      };
-
-      if (!hasPlugin(editor, 'advlist')) {
-        editor.addButton('numlist', {
-          title: 'Numbered list',
-          cmd: 'InsertOrderedList',
-          onPostRender: listState('OL')
+      api.setEnabled(editor.selection.isEditable());
+      return setNodeChangeHandler(editor, toggleButtonHandler);
+    };
+    const register$1 = editor => {
+      const exec = command => () => editor.execCommand(command);
+      if (!editor.hasPlugin('advlist')) {
+        editor.ui.registry.addToggleButton('numlist', {
+          icon: 'ordered-list',
+          active: false,
+          tooltip: 'Numbered list',
+          onAction: exec('InsertOrderedList'),
+          onSetup: setupToggleButtonHandler(editor, 'OL')
         });
-
-        editor.addButton('bullist', {
-          title: 'Bullet list',
-          cmd: 'InsertUnorderedList',
-          onPostRender: listState('UL')
+        editor.ui.registry.addToggleButton('bullist', {
+          icon: 'unordered-list',
+          active: false,
+          tooltip: 'Bullet list',
+          onAction: exec('InsertUnorderedList'),
+          onSetup: setupToggleButtonHandler(editor, 'UL')
         });
       }
+    };
 
-      editor.addButton('indent', {
-        icon: 'indent',
-        title: 'Increase indent',
-        cmd: 'Indent',
-        onPostRender: function (e) {
-          var ctrl = e.control;
-
-          editor.on('nodechange', function () {
-            var blocks = editor.selection.getSelectedBlocks();
-            var disable = false;
-
-            for (var i = 0, l = blocks.length; !disable && i < l; i++) {
-              var tag = blocks[i].nodeName;
-
-              disable = (tag === 'LI' && NodeType.isFirstChild(blocks[i]) || tag === 'UL' || tag === 'OL' || tag === 'DD');
-            }
-
-            ctrl.disabled(disable);
-          });
+    const setupMenuButtonHandler = (editor, listName) => api => {
+      const menuButtonHandler = e => api.setEnabled(inList(e.parents, listName) && !isWithinNonEditableList(editor, e.element));
+      return setNodeChangeHandler(editor, menuButtonHandler);
+    };
+    const register = editor => {
+      const listProperties = {
+        text: 'List properties...',
+        icon: 'ordered-list',
+        onAction: () => editor.execCommand('mceListProps'),
+        onSetup: setupMenuButtonHandler(editor, 'OL')
+      };
+      editor.ui.registry.addMenuItem('listprops', listProperties);
+      editor.ui.registry.addContextMenu('lists', {
+        update: node => {
+          const parentList = getParentList(editor, node);
+          return isOlNode(parentList) ? ['listprops'] : [];
         }
       });
     };
 
-    PluginManager.add('lists', function (editor) {
-      setupUi(editor);
-      Delete.setup(editor);
-
-      editor.on('init', function () {
-        setupCommands(editor);
-        setupStateHandlers(editor);
-        if (editor.getParam('lists_indent_on_tab', true)) {
-          setupTabKey(editor);
+    var Plugin = () => {
+      global$7.add('lists', editor => {
+        register$3(editor);
+        setup$1(editor);
+        if (!editor.hasPlugin('rtc', true)) {
+          setup(editor);
+          register$2(editor);
+        } else {
+          registerDialog(editor);
         }
+        register$1(editor);
+        register(editor);
+        return get(editor);
       });
+    };
 
-      return {
-        backspaceDelete: function (isForward) {
-          Delete.backspaceDelete(editor, isForward);
-        }
-      };
-    });
+    Plugin();
 
-    return function () { };
-  }
-);
-
-
-dem('tinymce.plugins.lists.Plugin')();
 })();

@@ -1,43 +1,59 @@
 {
-  "_from": "tinymce@4.6.4",
-  "_id": "tinymce@4.6.4",
+  "_from": "tinymce@7.2.0",
+  "_id": "tinymce@7.2.0",
   "_inBundle": false,
-  "_integrity": "sha1-dBVVnyZt4kvqfmnVnkPh5h59EaQ=",
+  "_integrity": "sha512-R460NlE4REIFuLcZd9mpHK8zRsHdOueLV2m6Wsn0JHfGhDWMcfB1IqUX2QGrSbJga93ygJbJbNMwb2sakFlE/g==",
   "_location": "/tinymce",
   "_phantomChildren": {},
   "_requested": {
     "type": "version",
     "registry": true,
-    "raw": "tinymce@4.6.4",
+    "raw": "tinymce@7.2.0",
     "name": "tinymce",
     "escapedName": "tinymce",
-    "rawSpec": "4.6.4",
+    "rawSpec": "7.2.0",
     "saveSpec": null,
-    "fetchSpec": "4.6.4"
+    "fetchSpec": "7.2.0"
   },
   "_requiredBy": [
     "/"
   ],
-  "_resolved": "https://registry.npmjs.org/tinymce/-/tinymce-4.6.4.tgz",
-  "_shasum": "7415559f266de24bea7e69d59e43e1e61e7d11a4",
-  "_spec": "tinymce@4.6.4",
-  "_where": "/Users/jyothish/Documents/polluxui-free/template",
+  "_resolved": "https://registry.npmjs.org/tinymce/-/tinymce-7.2.0.tgz",
+  "_shasum": "c5015567e742093b43186400c3e7c8394b90cc1f",
+  "_spec": "tinymce@7.2.0",
+  "_where": "/home/lamz16/Downloads/polluxui-free-admin-template-1.0.0/template",
+  "author": {
+    "name": "Ephox Corporation DBA Tiny Technologies, Inc"
+  },
   "bugs": {
-    "url": "http://www.tinymce.com/develop/bugtracker.php"
+    "url": "https://github.com/tinymce/tinymce/issues"
   },
   "bundleDependencies": false,
   "deprecated": false,
   "description": "Web based JavaScript HTML WYSIWYG editor control.",
+  "homepage": "https://www.tiny.cloud/",
   "keywords": [
-    "editor",
     "wysiwyg",
     "tinymce",
     "richtext",
     "javascript",
-    "html"
+    "html",
+    "text",
+    "rich editor",
+    "rich text editor",
+    "rte",
+    "rich text",
+    "contenteditable",
+    "editing"
   ],
-  "license": "LGPL-2.1",
+  "license": "GPL-2.0-or-later",
   "main": "tinymce.js",
   "name": "tinymce",
-  "version": "4.6.4"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tinymce/tinymce.git",
+    "directory": "modules/tinymce"
+  },
+  "types": "tinymce.d.ts",
+  "version": "7.2.0"
 }

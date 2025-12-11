@@ -22,53 +22,10 @@
                                     @if(session('success'))
                                         <div class="alert alert-success alert-dismissible fade show" role="alert" id="successAlert">
                                             {{ session('success') }}
-                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                                         </div>
-
-                                        <script>
-                                            setTimeout(() => {
-                                                const alert = document.getElementById('successAlert');
-                                                if(alert){
-                                                    const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                                                    bsAlert.close();
-                                                }
-                                            }, 3000);
-                                        </script>
                                     @endif
 
-                                    <form class="forms-sample" method="POST"
-                                          action="{{ route('admin.forms.add-provinsi.store') }}"
-                                          enctype="multipart/form-data">
-
-                                        @csrf
-
-                                        <div class="form-group">
-                                            <label for="nama_provinsi">Nama Provinsi</label>
-                                            <input type="text" class="form-control" id="nama_provinsi" name="nama_provinsi" placeholder="Nama Provinsi">
-                                        </div>
-
-                                        <div class="form-group">
-                                            <label>Upload Gambar Provinsi</label>
-                                            <input type="file" name="img_provinsi" class="file-upload-default">
-                                            <div class="input-group col-xs-12">
-                                                <input type="text" class="form-control file-upload-info" disabled
-                                                       placeholder="Upload Gambar">
-                                                <span class="input-group-append">
-                                                    <button class="file-upload-browse btn btn-primary" type="button">Upload</button>
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div class="form-group">
-                                            <label for="detail_provinsi">Detail Provinsi</label>
-                                            <textarea class="form-control" id="detail_provinsi" name="detail_provinsi" rows="4"></textarea>
-                                        </div>
-                                        <button type="submit" class="btn btn-primary mr-2" id="submitBtn">
-                                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="submitSpinner"></span>
-                                            <span id="submitText">Submit</span>
-                                        </button>
-                                        <button class="btn btn-light">Cancel</button>
-                                    </form>
+                                  @include('admin.forms.provinsi.forms-input')
                                 </div>
                             </div>
                         </div>
@@ -94,9 +51,10 @@
         </div>
         <!-- page-body-wrapper ends -->
     </div>
-    <!-- container-scroller -->
-    <!-- base:js -->
+
     @include('admin.forms.foot')
+    @include('admin.forms.provinsi.animation-alert-succes')
+
     <!-- End custom js for this page-->
     </body>
 
