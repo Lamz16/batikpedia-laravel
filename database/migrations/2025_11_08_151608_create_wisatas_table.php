@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('wisatas', function (Blueprint $table) {
             $table->id('id_wisata');
             $table->unsignedBigInteger('provinsi_id');
-            $table->foreign('provinsi_id')->references('id')->on('provinsis')->onDelete('cascade');
+            $table->foreign('provinsi_id')->references('id_provinsi')->on('provinsis')->onDelete('cascade');
             $table->string('nama_wisata')->unique();
             $table->text('detail_wisata')->nullable();
             $table->decimal('lat',10,7)->nullable();
