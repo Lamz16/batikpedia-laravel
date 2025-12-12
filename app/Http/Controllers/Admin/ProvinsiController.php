@@ -11,7 +11,7 @@ class ProvinsiController extends Controller
     {
         $request->validate([
             'nama_provinsi'   => 'required|max:255|unique:provinsis,nama_provinsi',
-            'img_provinsi'    => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            'img_provinsi'    => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
             'detail_provinsi' => 'nullable|string',
         ]);
 
@@ -30,6 +30,8 @@ class ProvinsiController extends Controller
         // Convert ke WebP
         if (in_array($originalExt, ['jpg', 'jpeg'])) {
             $image = imagecreatefromjpeg($file->getPathname());
+        } elseif ($originalExt === 'webp'){
+            $image = imagecreatefromwebp($file->getPathname());
         } elseif ($originalExt === 'png') {
             $image = imagecreatefrompng($file->getPathname());
             // fix background hitam
