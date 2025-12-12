@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\BeritaController;
+use App\Http\Controllers\Admin\KursusController;
 use App\Http\Controllers\Admin\ProvinsiController;
 use App\Http\Controllers\Admin\RekomendasiController;
 use App\Http\Controllers\Admin\VideoBatikController;
@@ -34,6 +35,10 @@ Route::get('/admin/forms/add-video', function () {
     return view('admin.forms.video-batik.add_video');
 })->name('admin.forms.add-video');
 
+Route::get('/admin/forms/add-kursus', function () {
+    return view('admin.forms.kursus.add_kursus');
+})->name('admin.forms.add-kursus');
+
 
 /// POST
 ///
@@ -48,4 +53,7 @@ Route::post('/admin/forms/add-berita', [BeritaController::class, 'store'])
     ->name('admin.forms.add-berita.store');
 
 Route::post('/admin/forms/add-video', [VideoBatikController::class, 'store'])
-    ->name('admin.forms.add-video');
+    ->name('admin.forms.add-video.store');
+
+Route::post('/admin/forms/add-kursus', [KursusController::class, 'store'])
+    ->name('admin.forms.add-kursus.store');
