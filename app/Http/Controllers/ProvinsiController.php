@@ -24,6 +24,19 @@ class ProvinsiController extends Controller
             return ApiResponse::error(404, 'Data provinsi kosong');
         }
 
+        $provinsi->each(function ($item) {
+            $item->img_provinsi= url($item->img_provinsi);
+
+            $item->katalogBatik->each(function ($batik) {
+                $batik->img_batik = url($batik->img_batik);
+            });
+
+            $item->wisata->each(function ($wisata) {
+                $wisata->img_wisata = url($wisata->img_wisata);
+            });
+
+        });
+
         return ApiResponse::success($provinsi, 'Success get list provinsi');
     }
 
