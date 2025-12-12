@@ -20,6 +20,10 @@ class WisataController extends Controller
             return ApiResponse::error(404, "Data Wisata Tidak Ditemukan");
         }
 
+        $wisata->each(function ($item) {
+            $item->img_wisata= url($item->img_wisata);
+        });
+
         return ApiResponse::success($wisata, "Success get data wisata");
     }
 
