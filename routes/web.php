@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\BeritaController;
 use App\Http\Controllers\Admin\ProvinsiController;
 use App\Http\Controllers\Admin\RekomendasiController;
+use App\Http\Controllers\Admin\VideoBatikController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/admin/dashboard', function () {
@@ -29,6 +30,10 @@ Route::get('/admin/forms/add-rekomendasi', function () {
     return view('admin.forms.rekomendasi.add_rekomendasi');
 })->name('admin.forms.add-rekomendasi');
 
+Route::get('/admin/forms/add-video', function () {
+    return view('admin.forms.video-batik.add_video');
+})->name('admin.forms.add-video');
+
 
 /// POST
 ///
@@ -38,5 +43,9 @@ Route::post('/admin/forms/add-provinsi', [ProvinsiController::class, 'store'])
 
 Route::post('/admin/forms/add-rekomendasi', [RekomendasiController::class, 'store'])
     ->name('admin.forms.add-rekomendasi.store');
+
 Route::post('/admin/forms/add-berita', [BeritaController::class, 'store'])
     ->name('admin.forms.add-berita.store');
+
+Route::post('/admin/forms/add-video', [VideoBatikController::class, 'store'])
+    ->name('admin.forms.add-video');
