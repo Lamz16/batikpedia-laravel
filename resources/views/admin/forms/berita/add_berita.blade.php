@@ -19,36 +19,15 @@
                         <div class="card">
                             <div class="card-body">
                                 <h4 class="card-title">Tambah Data Berita</h4>
-                                <form class="forms-sample">
-                                    <div class="form-group">
-                                        <label for="inputNamaBerita">Nama Berita</label>
-                                        <input type="text" class="form-control" id="inputNamaBerita" placeholder="Nama Berita">
-                                    </div>
 
-                                    <div class="form-group">
-                                        <label for="inputTanggalBerita">Tanggal Berita</label>
-                                        <input type="datetime-local" class="form-control" id="inputTanggalBerita" placeholder="Tanggal Berita">
-                                        <input type="hidden" name="tgl_berita" id="tglBeritaHidden">
+                                @if(session('success'))
+                                    <div class="alert alert-success alert-dismissible fade show" role="alert"
+                                         id="successAlert">
+                                        {{ session('success') }}
                                     </div>
+                                @endif
 
-                                    <div class="form-group">
-                                        <label for="lokasiBerita">Lokasi Berita</label>
-                                        <input type="text" class="form-control" id="lokasiBerita" placeholder="Lokasi Berita">
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="urlBerita">Url Berita</label>
-                                        <input type="text" class="form-control" id="urlBerita" placeholder="Url Berita">
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="urlImgBerita">Gambar Berita</label>
-                                        <input type="text" class="form-control" id="urlImgBerita" placeholder="Url Gambar Berita">
-                                    </div>
-
-                                    <button type="submit" class="btn btn-primary mr-2">Submit</button>
-                                    <button class="btn btn-light">Cancel</button>
-                                </form>
+                                @include('admin.forms.berita.forms-berita')
                             </div>
                         </div>
                     </div>
@@ -62,6 +41,7 @@
 <!-- container-scroller -->
 <!-- base:js -->
 @include('admin.forms.foot')
+@include('admin.forms.partial.animation-alert-succes')
 <script src="{{asset('build/js/date-picker.js')}}"></script>
 <!-- End custom js for this page-->
 </body>
