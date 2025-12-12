@@ -9,6 +9,14 @@
         <input type="text" class="form-control" id="nama_provinsi" name="nama_provinsi" placeholder="Nama Provinsi">
     </div>
 
+    <div id="alertFileToLarge" class="alert alert-danger d-none" role="alert">
+        Ukuran file terlalu besar, pastikan tidak lebih dari 2 MB
+    </div>
+
+    <div id="alertFormatNotSupport" class="alert alert-danger d-none" role="alert">
+        Format file anda tidak mendukung
+    </div>
+
     <div class="form-group">
         <label>Upload Gambar Provinsi</label>
         <input type="file" name="img_provinsi" class="file-upload-default">
@@ -16,8 +24,8 @@
             <input type="text" class="form-control file-upload-info" disabled
                    placeholder="Upload Gambar">
             <span class="input-group-append">
-                                                    <button class="file-upload-browse btn btn-primary" type="button">Upload</button>
-                                                </span>
+                <button class="file-upload-browse btn btn-primary" type="button">Upload</button>
+            </span>
         </div>
     </div>
 
