@@ -5,7 +5,7 @@ informasi terkait budaya batik Indonesia. Proyek ini menggunakan framework Larav
 workflow pengembangan yang menyenangkan. Proyek ini dibuat atas dasar kebutuhan aplikasi Android Batik Pedia.
 
 ## Alur Aplikasi
-![Gambar FLow Aplikasi](diagram-14495331867026526671.png)
+![Gambar FLow Aplikasi](diagram-9643048887214274491.png)
 
 ## Fitur Utama Batik Pedia
 
