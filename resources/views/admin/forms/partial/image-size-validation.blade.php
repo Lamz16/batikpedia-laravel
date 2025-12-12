@@ -27,7 +27,7 @@
                 }
 
                 // Validasi extension
-                const allowedExt = [".jpg", ".jpeg", ".png"];
+                const allowedExt = [".jpg", ".jpeg", ".png", "webp"];
                 const name = file.name.toLowerCase();
 
                 if (!allowedExt.some(ext => name.endsWith(ext))) {
