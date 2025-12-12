@@ -33,9 +33,11 @@
         <label for="detail_provinsi">Detail Provinsi</label>
         <textarea class="form-control" id="detail_provinsi" name="detail_provinsi" rows="4"></textarea>
     </div>
+
     <button type="submit" class="btn btn-primary mr-2" id="submitBtn">
         <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true" id="submitSpinner"></span>
         <span id="submitText">Submit</span>
     </button>
-    <button class="btn btn-light">Cancel</button>
+
+    <button type="reset" class="btn btn-light">Cancel</button>
 </form>
