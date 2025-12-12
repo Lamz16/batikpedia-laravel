@@ -1,7 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
-
 @include('admin.forms.head')
 <body>
 <div class="container-scroller">
@@ -19,50 +17,16 @@
                         <div class="card">
                             <div class="card-body">
                                 <h4 class="card-title">Tambah Data Wisata</h4>
-                                <form class="forms-sample">
-                                    <div class="form-group">
-                                        <label for="inputNamaWisata">Nama Wisata</label>
-                                        <input type="text" class="form-control" id="inputNamaWisata" placeholder="Nama Wisata">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inputDetailWisata">Detail Wisata</label>
-                                        <textarea class="form-control" id="inputDetailWisata" rows="4"></textarea>
-                                    </div>
 
-                                    <div class="form-group">
-                                        <label for="inputLat">Lat</label>
-                                        <input type="text" class="form-control" id="inputLat"
-                                               placeholder="Latitude">
+                                @if(session('success'))
+                                    <div class="alert alert-success alert-dismissible fade show" role="alert"
+                                         id="successAlert">
+                                        {{ session('success') }}
                                     </div>
+                                @endif
 
-                                    <div class="form-group">
-                                        <label for="inputLon">Lon</label>
-                                        <input type="text" class="form-control" id="inputLon"
-                                               placeholder="Longitude">
-                                    </div>
+                                @include('admin.forms.wisata.forms-input')
 
-                                    <div class="form-group">
-                                        <label for="imageWisata">Url Gambar Wisata</label>
-                                        <input type="text" class="form-control" id="imageWisata" placeholder="Url Gambar Wisata">
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="inputWilayah">Wilayah Wisata</label>
-                                        <input type="text" class="form-control" id="inputWilayah" placeholder="Wilayah Wisata">
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="inputIdProvinsi">Provinsi</label>
-                                        <select class="form-control" id="inputIdProvinsi">
-                                            <option>None</option>
-                                            <option>Bali</option>
-                                            <option>Jawa Timur</option>
-                                        </select>
-                                    </div>
-
-                                    <button type="submit" class="btn btn-primary mr-2">Submit</button>
-                                    <button class="btn btn-light">Cancel</button>
-                                </form>
                             </div>
                         </div>
                     </div>
@@ -73,10 +37,10 @@
     </div>
     <!-- page-body-wrapper ends -->
 </div>
-<!-- container-scroller -->
-<!-- base:js -->
+
 @include('admin.forms.foot')
-<!-- End custom js for this page-->
+@include('admin.forms.partial.animation-alert-succes')
+@include('admin.forms.partial.image-size-validation')
 </body>
 
 </html>
