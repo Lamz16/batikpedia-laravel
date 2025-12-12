@@ -11,7 +11,7 @@ class ProvinsiController extends Controller
     {
         $request->validate([
             'nama_provinsi'   => 'required|max:255|unique:provinsis,nama_provinsi',
-            'img_provinsi'    => 'required|image|mimes:jpg,jpeg,png|max:4096',
+            'img_provinsi'    => 'required|image|mimes:jpg,jpeg,png|max:2048',
             'detail_provinsi' => 'nullable|string',
         ]);
 
@@ -36,6 +36,9 @@ class ProvinsiController extends Controller
             imagepalettetotruecolor($image);
             imagealphablending($image, true);
             imagesavealpha($image, true);
+        }else {
+            // <-- ini penting untuk mencegah undefined $image
+            return back()->with('error', 'Format gambar tidak didukung!');
         }
 
 // simpan WebP terkompresi
