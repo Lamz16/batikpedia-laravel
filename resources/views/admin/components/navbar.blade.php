@@ -19,7 +19,7 @@
                     <li class="nav-item"><a class="nav-link" href="{{route('admin.forms.add-provinsi')}}">Tambah Provinsi</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{route('admin.forms.add-berita')}}">Tambah Berita</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{route('admin.forms.add-wisata')}}">Tambah Wisata</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{{route('admin.forms.add-katalog')}}">Tambah Video Batik</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{route('admin.forms.add-video')}}">Tambah Video Batik</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{route('admin.forms.add-katalog')}}">Tambah Kursus Batik</a></li>
                     <li class="nav-item"><a class="nav-link" href="{{route('admin.forms.add-rekomendasi')}}">Tambah Rekomendasi</a></li>
                 </ul>
