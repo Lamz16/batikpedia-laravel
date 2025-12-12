@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\BeritaController;
 use App\Http\Controllers\Admin\ProvinsiController;
 use App\Http\Controllers\Admin\RekomendasiController;
 use Illuminate\Support\Facades\Route;
@@ -29,8 +30,6 @@ Route::get('/admin/forms/add-rekomendasi', function () {
 })->name('admin.forms.add-rekomendasi');
 
 
-
-
 /// POST
 ///
 
@@ -39,3 +38,5 @@ Route::post('/admin/forms/add-provinsi', [ProvinsiController::class, 'store'])
 
 Route::post('/admin/forms/add-rekomendasi', [RekomendasiController::class, 'store'])
     ->name('admin.forms.add-rekomendasi.store');
+Route::post('/admin/forms/add-berita', [BeritaController::class, 'store'])
+    ->name('admin.forms.add-berita.store');
