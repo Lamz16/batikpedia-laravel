@@ -47,7 +47,7 @@ class ProvinsiController extends Controller
 
         Provinsi::create([
             'nama_provinsi'   => $request->nama_provinsi,
-            'img_provinsi'    => $filename,
+            'img_provinsi'    => 'uploads/provinsi/'.$filename,
             'detail_provinsi' => $request->detail_provinsi,
         ]);
 
