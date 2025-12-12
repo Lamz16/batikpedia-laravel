@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ProvinsiController;
+use App\Http\Controllers\Admin\RekomendasiController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/admin/dashboard', function () {
@@ -23,6 +24,10 @@ Route::get('/admin/forms/add-wisata', function () {
     return view('admin.forms.wisata.add_wisata');
 })->name('admin.forms.add-wisata');
 
+Route::get('/admin/forms/add-rekomendasi', function () {
+    return view('admin.forms.rekomendasi.add_rekomendasi');
+})->name('admin.forms.add-rekomendasi');
+
 
 
 
@@ -31,3 +36,6 @@ Route::get('/admin/forms/add-wisata', function () {
 
 Route::post('/admin/forms/add-provinsi', [ProvinsiController::class, 'store'])
     ->name('admin.forms.add-provinsi.store');
+
+Route::post('/admin/forms/add-rekomendasi', [RekomendasiController::class, 'store'])
+    ->name('admin.forms.add-rekomendasi.store');
