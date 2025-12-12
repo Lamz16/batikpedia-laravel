@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\KursusController;
 use App\Http\Controllers\Admin\ProvinsiController;
 use App\Http\Controllers\Admin\RekomendasiController;
 use App\Http\Controllers\Admin\VideoBatikController;
+use App\Http\Controllers\Admin\WisataController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/admin/dashboard', function () {
@@ -23,9 +24,8 @@ Route::get('/admin/forms/add-berita', function () {
     return view('admin.forms.berita.add_berita');
 })->name('admin.forms.add-berita');
 
-Route::get('/admin/forms/add-wisata', function () {
-    return view('admin.forms.wisata.add_wisata');
-})->name('admin.forms.add-wisata');
+Route::get('/admin/forms/add-wisata', [WisataController::class, 'create'])
+    ->name('admin.forms.add-wisata');
 
 Route::get('/admin/forms/add-rekomendasi', function () {
     return view('admin.forms.rekomendasi.add_rekomendasi');
@@ -57,3 +57,6 @@ Route::post('/admin/forms/add-video', [VideoBatikController::class, 'store'])
 
 Route::post('/admin/forms/add-kursus', [KursusController::class, 'store'])
     ->name('admin.forms.add-kursus.store');
+
+Route::post('/admin/forms/add-wisata', [WisataController::class, 'store'])
+    ->name('admin.forms.add-wisata.store');
